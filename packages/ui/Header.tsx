@@ -1,5 +1,5 @@
-import * as React from "react";
+import { FC } from "react";
 
-export const Header = ({ text }: { text: string }) => {
-  return <h1>{text}</h1>;
+export const Header: FC<{ text: string }> = ({ text }) => {
+  return <h1 className="text-3xl font-bold color-gray-900">{text}</h1>;
 };
