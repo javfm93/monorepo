@@ -53,6 +53,9 @@ importers:
       tailwindcss:
         specifier: ^3.3.2
         version: 3.3.2
+      tailwindcss-animated:
+        specifier: ^1.0.1
+        version: 1.0.1(tailwindcss@3.3.2)
       tsconfig:
         specifier: workspace:*
         version: link:../../packages/tsconfig
@@ -2703,6 +2706,14 @@ packages:
       slice-ansi: 4.0.0
       string-width: 4.2.3
       strip-ansi: 6.0.1
+
+  /tailwindcss-animated@1.0.1(tailwindcss@3.3.2):
+    resolution: {integrity: sha512-u5wusj89ZwP8I+s8WZlaAd7aZTWBN/XEG6QgMKpkIKmAf3xP1A6WYf7oYIKmGaB10UAQaSqWopi/i1ozzZEs8Q==}
+    peerDependencies:
+      tailwindcss: '>=3.1.0'
+    dependencies:
+      tailwindcss: 3.3.2
+    dev: true
 
   /tailwindcss@3.3.2:
     resolution: {integrity: sha512-9jPkMiIBXvPc2KywkraqsUfbfj+dHDb+JPWtSJa9MLFdrPyazI7q6WX2sUrm7R9eVR7qqv3Pas7EvQFzxKnI6w==}

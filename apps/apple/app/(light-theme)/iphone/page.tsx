@@ -1,5 +1,6 @@
 import Image from 'next/image'
 import Link from 'next/link'
+import { BuyButton } from '../../components/BuyButton'
 
 const iphonesImg =
   'https://www.apple.com/v/iphone/home/bo/images/overview/hero/hero_iphone_14__de41900yuggi_medium.jpg'
@@ -36,9 +37,7 @@ export default function Page() {
         <p className="text-xl mt-8">
           From $799 or $33.29/mo. for 24 mo. before trade‑in<sup>2</sup>
         </p>
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mt-4 rounded-full">
-          Buy
-        </button>
+        <BuyButton />
         <Link className="text-blue-500 mt-4" href={'/iphone'}>
           Learn more {'>'}
         </Link>
@@ -56,9 +55,7 @@ export default function Page() {
         <p className="text-white text-xl mt-8">
           From $999 or $41.62/mo. for 24 mo. before trade‑in<sup>2</sup>
         </p>
-        <button className="bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 mt-4 rounded-full">
-          Buy
-        </button>
+        <BuyButton />
         <Link className="text-blue-500 mt-4" href={'/iphone'}>
           Learn more {'>'}
         </Link>

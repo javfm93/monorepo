@@ -2,6 +2,7 @@
 import Image from 'next/image'
 import Link from 'next/link'
 import { useEffect, useRef, useState } from 'react'
+import { Routes } from '../../routes'
 
 const iphoneImg =
   'https://www.apple.com/v/iphone/home/bo/images/chapternav/iphone_14_pro_light__dfhcc00ur2oi_large.svg'
@@ -30,57 +31,69 @@ const images = {
   shopIPhone: shopIPhoneImg
 }
 
-type NavProduct = { img: string; name: string; isNew?: boolean }
+type NavProduct = { img: string; name: string; route: Routes; isNew?: boolean }
 
 const products: NavProduct[] = [
   {
     img: images.iphone,
     name: 'iphone 14 Pro',
+    route: Routes.iphone14pro,
     isNew: true
   },
   {
     img: images.iphone,
+    route: Routes.iphone14pro,
     name: 'iphone 14'
   },
   {
     img: images.iphone,
-    name: 'iphone 13'
+    name: 'iphone 13',
+    route: Routes.iphone14pro
   },
   {
     img: images.iphone,
-    name: 'iphone SE'
+    name: 'iphone SE',
+    route: Routes.iphone14pro
   },
   {
     img: images.iphone,
-    name: 'iphone 12'
+    name: 'iphone 12',
+    route: Routes.iphone14pro
   },
   {
     img: images.compare,
-    name: 'Compare'
+    name: 'Compare',
+    route: Routes.iphone14pro
   },
   {
     img: images.airPods,
-    name: 'AirPods'
+    name: 'AirPods',
+    route: Routes.iphone14pro
   },
   {
     img: images.airTag,
-    name: 'AirTag'
+    name: 'AirTag',
+    route: Routes.iphone14pro
   },
   {
     img: images.accessories,
-    name: 'Accessories'
+    name: 'Accessories',
+    route: Routes.iphone14pro
   },
   {
     img: images.appleCard,
-    name: 'Apple Card'
+    name: 'Apple Card',
+    route: Routes.iphone14pro
   },
   {
     img: images.ios,
-    name: 'iOS 16'
+    name: 'iOS 16',
+    route: Routes.iphone14pro
   },
   {
     img: images.shopIPhone,
-    name: 'Shop iPhone'
+    name: 'Shop iPhone',
+    route: Routes.iphone14pro
   }
 ]
 export type FCWithChildren<Props = {}> = React.FC<{ children: React.ReactNode } & Props>
@@ -115,14 +128,14 @@ export default function RootLayout({ children }) {
     <>
       <header>
         <nav
-          className={`flex ${
+          className={`flex bg-gray-50 ${
             show
               ? 'transition-all ease-in-out duration-300 transform -translate-x-20 relative left-20 opacity-1'
               : 'opacity-0'
           }`}
         >
           <button
-            className={`border-r-2 ml- 2 pr-2 h-22 my-3 opacity-${showButton ? 1 : 0}`}
+            className={`border-r-2 ml-2 pr-2 h-22 my-3 opacity-${showButton ? 1 : 0}`}
             onClick={e => {
               nav.current.scrollTo({
                 left: 0,
@@ -132,12 +145,9 @@ export default function RootLayout({ children }) {
           >
             {'<'}
           </button>
-          <ul
-            className="flex overflow-x-auto scrollbar-hidden py-3 gap-x-10 bg-gray-50 relative"
-            ref={nav}
-          >
+          <ul className="flex overflow-x-auto scrollbar-hidden py-3 gap-x-10" ref={nav}>
             {products.map(product => (
-              <Link key={product.name} href={`/${product.name}`} className="group">
+              <Link key={product.name} href={product.route} className="group">
                 <li className="flex flex-col items-center">
                   <Image
                     src={product.img}

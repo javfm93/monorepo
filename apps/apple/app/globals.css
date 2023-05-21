@@ -12,20 +12,7 @@ body {
   display: none;
 }
 
-/* For IE, Edge and Firefox */
 .scrollbar-hidden {
-  -ms-overflow-style: none; /* IE and Edge */
-  scrollbar-width: none; /* Firefox */
-}
-
-.slide-left {
-  animation: slide-left 0.4s linear both;
-}
-@keyframes slide-left {
-  0% {
-    transform: translateX(0);
-  }
-  100% {
-    transform: translateX(-100px);
-  }
+  -ms-overflow-style: none;
+  scrollbar-width: none;
 }
