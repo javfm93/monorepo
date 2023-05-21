@@ -4,6 +4,7 @@ import Link from 'next/link'
 import { ReactNode, useEffect, useRef, useState } from 'react'
 import { BuyButton } from '../../components/BuyButton'
 
+// todo: Make features lazy!!!
 // todo: overflow clip vs hidden
 // todo: put the arrows to go to details
 // todo: add animations
@@ -12,71 +13,63 @@ import { BuyButton } from '../../components/BuyButton'
 // todo: understand auto rows/grid a little better
 // todo: make the grid responsive
 // todo: texts of colors
-const iphone14Video =
-  'https://www.apple.com/105/media/us/iphone-14-pro/2023/b094f6e4-dcdb-494f-bd72-45d659126dcd/anim/hero/medium.mp4'
-
-const purpleIphoneImg =
-  'https://www.apple.com/v/iphone-14-pro/h/images/key-features/hero/hero_deep_purple__dlhl8s8j6wk2_large.jpg'
-const purpleIslandFeature =
-  'https://www.apple.com/v/iphone-14-pro/h/images/key-features/features/dynamic-island/dynamic_island_deep_purple__exowosw6732a_medium_2x.jpg'
-const purpleCameraFeature =
-  'https://www.apple.com/v/iphone-14-pro/h/images/key-features/features/main-camera/camera_deep_purple__fviv8fv1dyqa_medium_2x.jpg'
-const purpleChipFeature =
-  'https://www.apple.com/v/iphone-14-pro/h/images/key-features/features/chip/chip_deep_purple__bs3dtgitlt6q_large_2x.jpg'
-
-const blackIphoneImg =
-  'https://www.apple.com/v/iphone-14-pro/h/images/key-features/hero/hero_space_black__d2ll5e0lazcm_large.jpg'
-const silverIphoneImg =
-  'https://www.apple.com/v/iphone-14-pro/h/images/key-features/hero/hero_silver__8is8ix39ybm2_large.jpg'
-const goldIphoneImg =
-  'https://www.apple.com/v/iphone-14-pro/h/images/key-features/hero/hero_gold__eys85yr14k2u_large.jpg'
+const iphone14Video = '/iphone_14_pro_hero_video.mp4'
 
 enum Colors {
   Purple = 'Deep Purple',
-  Black = 'Space Black',
+  Gold = 'Gold',
   Silver = 'Silver',
-  Gold = 'Gold'
+  Black = 'Space Black'
 }
+
+const colorToFilename = (color: Colors) => color.toLowerCase().replace(' ', '_')
+
+const isColorSelected = (color: Colors, selectedColor: Colors) => color === selectedColor
+
+const colorToStyle = (color: Colors) =>
+  ({
+    [Colors.Purple]: 'bg-purple-800',
+    [Colors.Gold]: 'bg-yellow-100',
+    [Colors.Silver]: 'bg-slate-200',
+    [Colors.Black]: 'bg-gray-600'
+  }[color])
 
 const images = {
   hero: {
-    iphone: {
-      [Colors.Purple]: purpleIphoneImg,
-      [Colors.Black]: blackIphoneImg,
-      [Colors.Silver]: silverIphoneImg,
-      [Colors.Gold]: goldIphoneImg
-    }
+    iphone: (color: Colors) => `/iphone_14_pro_hero_${colorToFilename(color)}.jpeg`
   },
   features: {
-    island: {
-      [Colors.Purple]: purpleIslandFeature
-    },
-    camera: {
-      [Colors.Purple]: purpleCameraFeature
-    },
-    chip: {
-      [Colors.Purple]: purpleChipFeature
-    }
+    island: (color: Colors) => `/dynamic_island_${colorToFilename(color)}.jpeg`,
+    camera: (color: Colors) => `/camera_${colorToFilename(color)}.jpeg`,
+    chip: (color: Colors) => `/chip_${colorToFilename(color)}.jpeg`
   }
 }
 
 const ArrowSvg = () => (
   <svg className="text-black" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 32 32">
     <path
-      fill-rule="evenodd"
+      fillRule="evenodd"
       d="M21.71 14.918l-6.999-6.999a1.523 1.523 0 0 0-2.156 0 1.523 1.523 0 0 0 0 2.156l5.92 5.921-5.92 5.92a1.525 1.525 0 1 0 2.156 2.157l6.981-6.981.006-.007.012-.011a1.523 1.523 0 0 0 0-2.156"
       fill="currentColor"
     ></path>
   </svg>
 )
 
-const FeatureHeading: FCWithChildren = ({ children, className }) => (
-  <h3
-    className={`text-3xl font-semibold bg-gradient-to-b from-purple-300 to-purple-700 bg-clip-text text-transparent ${className}`}
-  >
-    {children}
-  </h3>
-)
+const FeatureHeading: FCWithChildren<{ color: Colors }> = ({ children, className, color }) => {
+  const colorToGradient = {
+    [Colors.Purple]: 'from-purple-300 to-purple-700',
+    [Colors.Gold]: 'from-yellow-300 to-yellow-700',
+    [Colors.Silver]: 'from-blue-300 to-blue-700',
+    [Colors.Black]: 'from-gray-300 to-gray-700'
+  }
+  return (
+    <h3
+      className={`text-3xl font-semibold bg-gradient-to-b ${colorToGradient[color]} bg-clip-text text-transparent ${className}`}
+    >
+      {children}
+    </h3>
+  )
+}
 
 export type FCWithChildren<T = {}> = React.FC<{ children: ReactNode; className?: string } & T>
 
@@ -86,10 +79,10 @@ const Section: FCWithChildren = ({ children, className = '' }) => (
 
 const Iphone14ProImg = ({ color }: { color: Colors }) => {
   return (
-    <div className="mt-16 mx-20 flex justify-center">
+    <div className="mt-8 mx-20 flex justify-center">
       <Image
         className="max-w-3xl animate-fade animate-duration-[2000ms] animate-ease-in-out"
-        src={images.hero.iphone[color]}
+        src={images.hero.iphone(color)}
         alt={`iPhone 14 ${color} image`}
         width={1325}
         height={968}
@@ -100,6 +93,21 @@ const Iphone14ProImg = ({ color }: { color: Colors }) => {
 
 const selectedColorStyles = 'outline-1 outline-gray-500 outline-offset-2 outline'
 
+const useOnView = () => {
+  const [inView, setInView] = useState(true)
+  const ref = useRef()
+  useEffect(() => {
+    const observer = new IntersectionObserver(entries => {
+      entries.forEach(entry => {
+        setInView(entry.isIntersecting)
+      })
+    })
+    observer.observe(ref.current)
+    return () => observer.unobserve(ref.current)
+  }, [])
+  return { ref, inView }
+}
+
 export default function Page() {
   const [selectedColor, setSelectedColor] = useState(Colors.Purple)
   const selectColor = (color: Colors) => () => {
@@ -108,12 +116,12 @@ export default function Page() {
   const videoRef = useRef<HTMLVideoElement>(null)
   const [displayVideo, setDisplayVideo] = useState(true)
 
+  const { ref: titleRef, inView: titleInView } = useOnView()
+
   useEffect(() => {
     const showColorPicker = () => {
       setDisplayVideo(false)
     }
-
-    console.log('videoRef.current', videoRef.current)
 
     if (videoRef.current) {
       videoRef.current.addEventListener('ended', showColorPicker)
@@ -132,104 +140,98 @@ export default function Page() {
           </Link>
         </p>
       </section>
-      <Section>
-        <header className="flex justify-between">
-          <h2 className="text-5xl font-medium">Pro. Beyond</h2>
-          <div className="flex items-center gap-x-2">
-            <span className="mr-3">{selectedColor}</span>
-            <button
-              onClick={selectColor(Colors.Purple)}
-              className={`h-5 w-5 rounded-full bg-purple-800 opacity-80 ${
-                selectedColor === 'Deep Purple' ? selectedColorStyles : ''
-              }`}
-            ></button>
-            <button
-              onClick={selectColor(Colors.Gold)}
-              className={`h-5 w-5 rounded-full bg-yellow-100 opacity-80 ${
-                selectedColor === 'Gold' ? selectedColorStyles : ''
-              }`}
-            ></button>
-            <button
-              onClick={selectColor(Colors.Silver)}
-              className={`h-5 w-5 rounded-full bg-slate-200 opacity-80 ${
-                selectedColor === 'Silver' ? selectedColorStyles : ''
-              }`}
-            ></button>
-            <button
-              onClick={selectColor(Colors.Black)}
-              className={`h-5 w-5 rounded-full bg-gray-600 opacity-80 ${
-                selectedColor === 'Space Black' ? selectedColorStyles : ''
-              }`}
-            ></button>
-          </div>
-        </header>
-        {displayVideo ? (
-          <video className="mt-8" autoPlay muted src={iphone14Video} ref={videoRef}></video>
-        ) : (
-          <Iphone14ProImg color={selectedColor} />
-        )}
-      </Section>
-      <section className="bg-[#161617] py-20 flex flex-col items-center">
-        <h3 className="text-2xl font-medium text-center">iPhone 14 Pro and iPhone 14 Pro Max</h3>
-        <h4 className="text-gray-400 mt-4">From $999 or $41.62/mo. for 24 mo. before trade‑in*</h4>
-        <BuyButton className="mt-8"></BuyButton>
 
-        <div className="grid grid-cols-[1fr_0.5361fr_1fr] grid-flow-row auto-rows-[14rem] gap-4 px-20 pt-16 lg:px-[22rem]">
-          <div className="row-span-2 col-span-2 bg-black pt-10 px-14 lg:px-20 rounded-3xl overflow-clip relative">
-            <FeatureHeading className="text-center">
-              Meet <br />
-              dynamic island.
-            </FeatureHeading>
+      <div className="mt-10 relative">
+        <div
+          className={`flex items-center justify-end gap-x-2 sticky top-[3.3rem] right-0 py-3.5 px-6 z-40 ${
+            titleInView ? '' : 'backdrop-blur-xl backdrop-saturate-200 bg-[rgba(29,29,31,.72)]'
+          }`}
+        >
+          <span className="mr-3 font-semibold text-sm text-white">{selectedColor}</span>
+          {Object.values(Colors).map(color => (
+            <button
+              key={color}
+              onClick={selectColor(color)}
+              className={`h-5 w-5 rounded-full ${colorToStyle(color)} opacity-80 ${
+                isColorSelected(color, selectedColor) ? selectedColorStyles : ''
+              }`}
+            />
+          ))}
+        </div>
+        <section className={`flex flex-col mx-6`}>
+          <h2 ref={titleRef} className="text-5xl font-medium relative -top-12">
+            Pro. Beyond
+          </h2>
+          {displayVideo ? (
+            <video className="mt-6" autoPlay muted src={iphone14Video} ref={videoRef}></video>
+          ) : (
+            <Iphone14ProImg color={selectedColor} />
+          )}
+        </section>
+        <section className="bg-[#161617] py-20 flex flex-col items-center">
+          <h3 className="text-2xl font-medium text-center">iPhone 14 Pro and iPhone 14 Pro Max</h3>
+          <h4 className="text-gray-400 mt-4">
+            From $999 or $41.62/mo. for 24 mo. before trade‑in*
+          </h4>
+          <BuyButton className="mt-8"></BuyButton>
 
-            <Image
-              className="pt-6"
-              src={images.features.island[selectedColor]}
-              alt={`iPhone 14 ${selectedColor} dynamic island`}
-              width={1325}
-              height={968}
-            />
-            <button className="absolute w-7 h-7 bottom-4 right-4 bg-white rounded-full">
-              <ArrowSvg />
-            </button>
-          </div>
-          <div className="bg-black rounded-3xl overflow-clip relative">
-            <Image
-              className="absolute -top-10"
-              src={images.features.camera[selectedColor]}
-              width={1325}
-              height={968}
-              alt="iPhone 14 camera"
-            />
-            <div className="z-20 absolute flex bottom-4 right-4 left-4 justify-between">
-              <p className="text-lg font-semibold">
-                48MP Main camera.
-                <br />
-                Mind-blowing detail.
-              </p>
-              <button className="w-7 h-7 bg-white rounded-full self-end">
+          <div className="grid grid-cols-[1fr_0.5361fr_1fr] grid-flow-row auto-rows-[14rem] gap-4 px-20 pt-16 lg:px-[22rem]">
+            <div className="row-span-2 col-span-2 bg-black pt-10 px-14 lg:px-20 rounded-3xl overflow-clip relative animate-fade">
+              <FeatureHeading color={selectedColor} className="text-center">
+                Meet <br />
+                dynamic island.
+              </FeatureHeading>
+
+              <Image
+                className="pt-6"
+                src={images.features.island(selectedColor)}
+                alt={`iPhone 14 ${selectedColor} dynamic island`}
+                width={1325}
+                height={968}
+              />
+              <button className="absolute w-7 h-7 bottom-4 right-4 bg-white rounded-full">
                 <ArrowSvg />
               </button>
             </div>
-            <div className="absolute bottom-0 w-full h-1/2 z-10 bg-gradient-to-b from-transparent to-black"></div>
+            <div className="bg-black rounded-3xl overflow-clip relative">
+              <Image
+                className="absolute -top-10"
+                src={images.features.camera(selectedColor)}
+                width={1325}
+                height={968}
+                alt="iPhone 14 camera"
+              />
+              <div className="z-20 absolute flex bottom-4 right-4 left-4 justify-between">
+                <p className="text-lg font-semibold">
+                  48MP Main camera.
+                  <br />
+                  Mind-blowing detail.
+                </p>
+                <button className="w-7 h-7 bg-white rounded-full self-end">
+                  <ArrowSvg />
+                </button>
+              </div>
+              <div className="absolute bottom-0 w-full h-1/2 z-10 bg-gradient-to-b from-transparent to-black"></div>
+            </div>
+            <div className="bg-black pt-6 pl-6 rounded-3xl overflow-clip relative">
+              <FeatureHeading color={selectedColor}>
+                The <br /> mastermind <br />
+                behind it all.
+              </FeatureHeading>
+              <Image
+                className="mt-4"
+                src={images.features.chip(selectedColor)}
+                width={1325}
+                height={968}
+                alt="iPhone 14 chip"
+              />
+              <button className="absolute w-7 h-7 bottom-4 right-4 bg-white rounded-full">
+                <ArrowSvg />
+              </button>
+            </div>
           </div>
-          <div className="bg-black pt-6 pl-6 rounded-3xl overflow-clip relative">
-            <FeatureHeading>
-              The <br /> mastermind <br />
-              behind it all.
-            </FeatureHeading>
-            <Image
-              className="mt-4"
-              src={images.features.chip[selectedColor]}
-              width={1325}
-              height={968}
-              alt="iPhone 14 chip"
-            />
-            <button className="absolute w-7 h-7 bottom-4 right-4 bg-white rounded-full">
-              <ArrowSvg />
-            </button>
-          </div>
-        </div>
-      </section>
+        </section>
+      </div>
     </>
   )
 }

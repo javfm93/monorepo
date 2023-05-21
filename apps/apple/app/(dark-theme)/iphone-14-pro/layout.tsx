@@ -6,7 +6,7 @@ import { Routes } from '../../routes'
 export default function RootLayout({ children }) {
   return (
     <>
-      <header className="flex flex-row items-center py-2 px-2 border-b-gray-600 border-b-[1px] px-6">
+      <header className="flex flex-row items-center py-2.5 px-6 border-b-gray-600 bg-black border-b-[1px] z-50 sticky top-0">
         <h2 className="text-2xl flex-grow">iPhone 4 Pro</h2>
         <ul className="flex flex-basis-1/2 gap-5 text-xs items-center">
           <li>
