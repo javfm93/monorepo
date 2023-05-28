@@ -1,0 +1,84 @@
+.iphone-comparison-grid {
+  grid-template-areas:
+    'iphone-14-pro-mobile iphone-14-mobile'
+    'iphone-14-pro-screen iphone-14-screen'
+    'iphone-14-pro-island iphone-14-island'
+    'iphone-13-mobile iphone-se-mobile'
+    'iphone-13-screen iphone-se-screen'
+    'iphone-13-island iphone-se-island';
+}
+
+@media (min-width: 1024px) {
+  .iphone-comparison-grid {
+    grid-template-areas:
+      'iphone-14-pro-mobile iphone-14-mobile iphone-13-mobile iphone-se-mobile'
+      'iphone-14-pro-screen iphone-14-screen iphone-13-screen iphone-se-screen'
+      'iphone-14-pro-island iphone-14-island iphone-13-island iphone-se-island';
+  }
+}
+
+@media (max-width: 640px) {
+  .iphone-comparison-grid {
+    grid-template-areas:
+      'iphone-14-pro-mobile'
+      'iphone-14-pro-screen'
+      'iphone-14-pro-island'
+      'iphone-14-mobile'
+      'iphone-14-screen'
+      'iphone-14-island'
+      'iphone-13-mobile'
+      'iphone-13-screen'
+      'iphone-13-island'
+      'iphone-se-mobile'
+      'iphone-se-screen'
+      'iphone-se-island';
+  }
+}
+
+.iphone-14-pro-mobile {
+  grid-area: iphone-14-pro-mobile;
+}
+
+.iphone-14-pro-screen {
+  grid-area: iphone-14-pro-screen;
+}
+
+.iphone-14-pro-island {
+  grid-area: iphone-14-pro-island;
+}
+
+.iphone-14-mobile {
+  grid-area: iphone-14-mobile;
+}
+
+.iphone-14-screen {
+  grid-area: iphone-14-screen;
+}
+
+.iphone-14-island {
+  grid-area: iphone-14-island;
+}
+
+.iphone-13-mobile {
+  grid-area: iphone-13-mobile;
+}
+
+.iphone-13-screen {
+  grid-area: iphone-13-screen;
+}
+
+.iphone-13-island {
+  grid-area: iphone-13-island;
+}
+
+.iphone-se-mobile {
+  grid-area: iphone-se-mobile;
+}
+
+.iphone-se-screen {
+  grid-area: iphone-se-screen;
+}
+
+.iphone-se-island {
+  grid-area: iphone-se-island;
+}

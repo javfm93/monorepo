@@ -4,28 +4,28 @@ import { CTASection } from './CTASection'
 import { ColorPicker } from './ColorPicker'
 import { FeaturesSection } from './FeaturesSection'
 import { HeroSection } from './HeroSection'
-import { TradeInSection } from './tradeInSection'
+import { IPhoneComparisonSection } from './IPhoneComparisonSection'
+import { TradeInSection } from './TradeInSection'
+import './comparisonGrid.css'
 import { useOnView } from './useOnView'
-
+// todo: implement the arrow button functionality
 // todo: Make features lazy!!!
 // todo: overflow clip vs hidden
 // todo: put the arrows to go to details
 // todo: add animations
-// todo: rest of colors
 // todo: rest of features
 // todo: understand auto rows/grid a little better
 // todo: make the grid responsive
-// todo: texts of colors
 // todo: Use zunstand for the color or fine grain context
 
-// would be nice to do an entity
+// todo:  would be nice to do an value object
 export enum Colors {
   Purple = 'Deep Purple',
   Gold = 'Gold',
   Silver = 'Silver',
   Black = 'Space Black'
 }
-export const colorToFilename = (color: Colors) => color.toLowerCase().replace(' ', '_')
+export const toFilename = (string: string) => string.toLowerCase().replaceAll(' ', '_')
 export const isColorSelected = (color: Colors, selectedColor: Colors) => color === selectedColor
 export const colorToStyle = (color: Colors) =>
   ({
@@ -44,12 +44,13 @@ export default function Page() {
   return (
     <>
       <TradeInSection />
-      <div className="mt-10 relative">
+      <div className="pt-10 relative">
         <ColorPicker color={color} setColor={setColor} titleInView={titleInView} />
         <HeroSection color={color} titleRef={titleRef} />
         <CTASection />
         <FeaturesSection color={color} />
       </div>
+      <IPhoneComparisonSection />
     </>
   )
 }

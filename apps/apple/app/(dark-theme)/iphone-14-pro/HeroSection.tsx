@@ -1,13 +1,13 @@
 'use client'
 import Image from 'next/image'
 import { FC, RefObject, useEffect, useRef, useState } from 'react'
-import { Colors, colorToFilename } from './page'
+import { Colors, toFilename } from './page'
 
 const iphone14Video = '/iphone_14_pro_hero_video.mp4'
 
 const images = {
   hero: {
-    iphone: (color: Colors) => `/iphone_14_pro_hero_${colorToFilename(color)}.jpeg`
+    iphone: (color: Colors) => `/iphone_14_pro_hero_${toFilename(color)}.jpeg`
   }
 }
 
@@ -30,7 +30,7 @@ export const HeroSection: FC<{
   }, [])
 
   return (
-    <section className={`flex flex-col mx-6`}>
+    <section className="flex flex-col mx-6">
       <h2 ref={titleRef} className="text-5xl font-medium relative -top-12">
         Pro. Beyond
       </h2>

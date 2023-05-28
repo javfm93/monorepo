@@ -1,15 +1,14 @@
-'use client'
 import Image from 'next/image'
 import { FC } from 'react'
-import { Colors, FCWithChildren, colorToFilename } from './page'
+import { Colors, FCWithChildren, toFilename } from './page'
 
-const iphone14Video = '/iphone_14_pro_hero_video.mp4'
+const cinematicModeVideo = '/cinematic_mode.mp4'
 
 const images = {
   features: {
-    island: (color: Colors) => `/dynamic_island_${colorToFilename(color)}.jpeg`,
-    camera: (color: Colors) => `/camera_${colorToFilename(color)}.jpeg`,
-    chip: (color: Colors) => `/chip_${colorToFilename(color)}.jpeg`
+    island: (color: Colors) => `/dynamic_island_${toFilename(color)}.jpeg`,
+    camera: (color: Colors) => `/camera_${toFilename(color)}.jpeg`,
+    chip: (color: Colors) => `/chip_${toFilename(color)}.jpeg`
   }
 }
 
@@ -41,8 +40,8 @@ const FeatureHeading: FCWithChildren<{ color: Colors }> = ({ children, className
 
 export const FeaturesSection: FC<{ color: Colors }> = ({ color }) => {
   return (
-    <section className="grid grid-cols-[1fr_0.5361fr_1fr] grid-flow-row auto-rows-[14rem] bg-[#161617] gap-4 px-20 pt-16 lg:px-[22rem]">
-      <article className="row-span-2 col-span-2 bg-black pt-10 px-14 lg:px-20 rounded-3xl overflow-clip relative animate-fade">
+    <section className="grid grid-cols-1 gap-y-4 grid-flow-row auto-rows-[28rem] pt-16 mx-auto px-6 bg-[#161617] sm:auto-rows-[14rem] sm:grid-cols-[1fr_0.5361fr_1fr] sm:gap-4 sm:px-20 lg:gap-x-8 lg:max-w-full lg:px-36 2xl:px-96">
+      <article className="h-full bg-black pt-10 rounded-3xl overflow-clip relative animate-fade sm:row-span-2 sm:col-span-2 sm:px-14 lg:px-20">
         <FeatureHeading color={color} className="text-center">
           Meet <br />
           dynamic island.
@@ -59,6 +58,7 @@ export const FeaturesSection: FC<{ color: Colors }> = ({ color }) => {
           <ArrowSvg />
         </button>
       </article>
+
       <article className="bg-black rounded-3xl overflow-clip relative">
         <Image
           className="absolute -top-10"
@@ -79,6 +79,7 @@ export const FeaturesSection: FC<{ color: Colors }> = ({ color }) => {
         </div>
         <div className="absolute bottom-0 w-full h-1/2 z-10 bg-gradient-to-b from-transparent to-black"></div>
       </article>
+
       <article className="bg-black pt-6 pl-6 rounded-3xl overflow-clip relative">
         <FeatureHeading color={color}>
           The <br /> mastermind <br />
@@ -95,6 +96,7 @@ export const FeaturesSection: FC<{ color: Colors }> = ({ color }) => {
           <ArrowSvg />
         </button>
       </article>
+
       <article className="bg-black pt-6 pl-6 rounded-3xl overflow-clip relative">
         <p>A battery that’s</p>
         <FeatureHeading color={color} className="text-5xl">
@@ -105,12 +107,20 @@ export const FeaturesSection: FC<{ color: Colors }> = ({ color }) => {
           <ArrowSvg />
         </button>
       </article>
-      <article className="bg-black col-span-2 pt-6 pl-6 rounded-3xl overflow-clip relative">
-        <video autoPlay muted src={iphone14Video}></video>
 
-        <button className="absolute w-7 h-7 bottom-4 right-4 bg-white rounded-full">
-          <ArrowSvg />
-        </button>
+      <article className="bg-black rounded-3xl overflow-clip relative sm:col-span-2">
+        <video autoPlay muted src={cinematicModeVideo} />
+
+        <div className="z-20 absolute flex bottom-4 right-4 left-4">
+          <div className="text-lg font-semibold flex-grow text-center">
+            <p>Pro video</p>
+            <h3 className="text-3xl font-semibold">Film like a Pro.</h3>
+          </div>
+          <h3></h3>
+          <button className="w-7 h-7 bg-white rounded-full self-end">
+            <ArrowSvg />
+          </button>
+        </div>
       </article>
     </section>
   )

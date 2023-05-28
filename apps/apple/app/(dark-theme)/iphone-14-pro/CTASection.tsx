@@ -1,6 +1,7 @@
+import { FC } from 'react'
 import { BuyButton } from '../../components/BuyButton'
 
-export const CTASection = () => {
+export const CTASection: FC = () => {
   return (
     <section className="bg-[#161617] pt-20 flex flex-col items-center">
       <h3 className="text-2xl font-medium text-center">iPhone 14 Pro and iPhone 14 Pro Max</h3>
