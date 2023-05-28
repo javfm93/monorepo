@@ -1,6 +1,8 @@
+'use client'
 import Image from 'next/image'
 import { FC } from 'react'
 import { Colors, FCWithChildren, toFilename } from './page'
+import { useOnView } from './useOnView'
 
 const cinematicModeVideo = '/cinematic_mode.mp4'
 
@@ -38,17 +40,29 @@ const FeatureHeading: FCWithChildren<{ color: Colors }> = ({ children, className
   )
 }
 
+const easyOutOpacity = (intersectionRatio: number, delay = 0) => {
+  const visibility = intersectionRatio - delay
+  return visibility < 0.1 ? visibility : visibility < 0.2 ? visibility * 2 : visibility * 3
+}
+
 export const FeaturesSection: FC<{ color: Colors }> = ({ color }) => {
+  const { ref: islandRef, intersectionRatio: islandVisibility } = useOnView()
+  const { ref: cameraRef, intersectionRatio: cameraVisibility } = useOnView()
+
   return (
     <section className="grid grid-cols-1 gap-y-4 grid-flow-row auto-rows-[28rem] pt-16 mx-auto px-6 bg-[#161617] sm:auto-rows-[14rem] sm:grid-cols-[1fr_0.5361fr_1fr] sm:gap-4 sm:px-20 lg:gap-x-8 lg:max-w-full lg:px-36 2xl:px-96">
-      <article className="h-full bg-black pt-10 rounded-3xl overflow-clip relative animate-fade sm:row-span-2 sm:col-span-2 sm:px-14 lg:px-20">
+      <article
+        ref={islandRef}
+        style={{ opacity: easyOutOpacity(islandVisibility) }}
+        className="h-full bg-black pt-10 rounded-3xl overflow-clip relative sm:row-span-2 sm:col-span-2 sm:px-14 lg:px-20"
+      >
         <FeatureHeading color={color} className="text-center">
           Meet <br />
           dynamic island.
         </FeatureHeading>
 
         <Image
-          className="pt-6"
+          className="pt-6 animate-fade-up animate-duration-[2000ms] animate-ease-in-out"
           src={images.features.island(color)}
           alt={`iPhone 14 ${color} dynamic island`}
           width={1325}
@@ -59,9 +73,13 @@ export const FeaturesSection: FC<{ color: Colors }> = ({ color }) => {
         </button>
       </article>
 
-      <article className="bg-black rounded-3xl overflow-clip relative">
+      <article
+        ref={cameraRef}
+        style={{ opacity: easyOutOpacity(cameraVisibility, 0.5) }}
+        className="bg-black rounded-3xl overflow-clip relative"
+      >
         <Image
-          className="absolute -top-10"
+          className="absolute -top-10 animate-fade-up animate-duration-[2000ms] animate-ease-in-out"
           src={images.features.camera(color)}
           width={1325}
           height={968}
@@ -86,7 +104,7 @@ export const FeaturesSection: FC<{ color: Colors }> = ({ color }) => {
           behind it all.
         </FeatureHeading>
         <Image
-          className="mt-4"
+          className="mt-4 animate-fade-down animate-duration-[2000ms] animate-ease-in-out"
           src={images.features.chip(color)}
           width={1325}
           height={968}

@@ -11,11 +11,7 @@ import { useOnView } from './useOnView'
 // todo: implement the arrow button functionality
 // todo: Make features lazy!!!
 // todo: overflow clip vs hidden
-// todo: put the arrows to go to details
-// todo: add animations
-// todo: rest of features
 // todo: understand auto rows/grid a little better
-// todo: make the grid responsive
 // todo: Use zunstand for the color or fine grain context
 
 // todo:  would be nice to do an value object
