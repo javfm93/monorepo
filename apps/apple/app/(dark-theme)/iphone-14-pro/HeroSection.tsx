@@ -30,14 +30,16 @@ export const HeroSection: FC<{
   }, [])
 
   return (
-    <section className="flex flex-col mx-6">
+    <section className="flex flex-col mx-6 2xl:px-80">
       <h2 ref={titleRef} className="text-5xl font-medium relative -top-12">
         Pro. Beyond
       </h2>
       {displayVideo ? (
-        <video className="mt-6" autoPlay muted src={iphone14Video} ref={videoRef}></video>
+        <div className="mt-8 flex justify-center 2xl:max-h-[59.2vh] 2xl:overflow-clip">
+          <video className="mt-8" autoPlay muted src={iphone14Video} ref={videoRef} />
+        </div>
       ) : (
-        <div className="mt-8 mx-20 flex justify-center">
+        <div className="mt-8 flex justify-center 2xl:max-h-[59.2vh] 2xl:overflow-clip">
           <Image
             className="max-w-3xl animate-fade animate-duration-[2000ms] animate-ease-in-out"
             src={images.hero.iphone(selectedColor)}

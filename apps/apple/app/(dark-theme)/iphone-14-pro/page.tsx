@@ -35,8 +35,9 @@ export type FCWithChildren<T = {}> = React.FC<{ children: ReactNode; className?:
 
 export default function Page() {
   const [color, setColor] = useState(Colors.Purple)
-  const { ref: titleRef, inView: titleInView } = useOnView()
+  const { ref: titleRef, inView: titleInView, intersectionRatio } = useOnView()
 
+  console.log(titleInView, intersectionRatio)
   return (
     <>
       <TradeInSection />

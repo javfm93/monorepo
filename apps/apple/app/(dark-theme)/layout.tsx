@@ -20,7 +20,7 @@ const icons = { Apple: AppleIcon, Search: SearchIcon, Cart: CartIcon }
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <>
-      <header className="bg-black text-white px-6">
+      <header className="bg-black text-white px-6 2xl:px-80">
         <nav>
           <ul className="flex justify-between items-center text-xs">
             <li>

@@ -12,7 +12,7 @@ type Props = {
 export const ColorPicker: FC<Props> = ({ color: selectedColor, setColor, titleInView }) => {
   return (
     <div
-      className={`flex items-center justify-end gap-x-2 sticky top-[3.3rem] right-0 py-3.5 px-6 z-40 ${
+      className={`flex items-center justify-end gap-x-2 sticky top-[3.3rem] right-0 py-3.5 px-6 z-40 2xl:px-80 ${
         titleInView ? '' : 'backdrop-blur-xl backdrop-saturate-200 bg-[rgba(29,29,31,.72)]'
       }`}
     >

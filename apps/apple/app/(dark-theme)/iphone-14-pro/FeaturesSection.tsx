@@ -50,7 +50,7 @@ export const FeaturesSection: FC<{ color: Colors }> = ({ color }) => {
   const { ref: cameraRef, intersectionRatio: cameraVisibility } = useOnView()
 
   return (
-    <section className="grid grid-cols-1 gap-y-4 grid-flow-row auto-rows-[28rem] pt-16 mx-auto px-6 bg-[#161617] sm:auto-rows-[14rem] sm:grid-cols-[1fr_0.5361fr_1fr] sm:gap-4 sm:px-20 lg:gap-x-8 lg:max-w-full lg:px-36 2xl:px-96">
+    <section className="grid grid-cols-1 gap-y-4 grid-flow-row auto-rows-[28rem] pt-16 mx-auto px-6 bg-[#161617] sm:auto-rows-[14rem] sm:grid-cols-[1fr_0.5361fr_1fr] sm:gap-4 sm:px-20 lg:gap-x-8 lg:max-w-full lg:px-36 2xl:px-80">
       <article
         ref={islandRef}
         style={{ opacity: easyOutOpacity(islandVisibility) }}

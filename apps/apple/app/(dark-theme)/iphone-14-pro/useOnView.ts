@@ -9,7 +9,6 @@ export const useOnView = () => {
   useEffect(() => {
     const observer = new IntersectionObserver(
       entries => {
-        console.log(entries)
         entries.forEach(entry => {
           setInView(entry.isIntersecting)
           setIntersectionRatio(entry.intersectionRatio)
