@@ -9,12 +9,15 @@ export type Atom<Type> = {
   subscribe(callback: Subscriber<Type>): () => void
 }
 
-export type AtomGetter<Type> = (get: <T>(a: Atom<T>) => T) => Type
+export type AtomGetter<Type> = (get: <T>(a: Atom<T>) => T) => Type | Promise<Type>
 
 const isAtomGetter = <Type,>(initial: Type | AtomGetter<Type>): initial is AtomGetter<Type> => {
   return typeof initial === 'function'
 }
 
+const isAsyncResult = <Type,>(value: Type | Promise<Type>): value is Promise<Type> => {
+  return value && typeof value === 'object' && 'then' in value && typeof value.then === 'function'
+}
 // todo: better way to handle subscribers
 export const atom = <Type,>(initial: Type | AtomGetter<Type>, name = 'unknown'): Atom<Type> => {
   let value = isAtomGetter(initial) ? (null as Type) : initial
@@ -32,8 +35,23 @@ export const atom = <Type,>(initial: Type | AtomGetter<Type>, name = 'unknown'):
     atom.subscribe(onSubscribe)
     return currentValue
   }
+  const set = (newValue: Type) => {
+    value = newValue
+    subscribers.forEach(callback => callback(value))
+  }
+
   const computeAtom = () => {
-    value = isAtomGetter(initial) ? initial(getAtom) : initial
+    if (isAtomGetter(initial)) {
+      const newValue = initial(getAtom)
+      
+      if (isAsyncResult(newValue)) {
+        newValue.then(set)
+      } else {
+        value = newValue
+      }
+    } else {
+      value = initial
+    }
   }
   computeAtom()
 
@@ -42,10 +60,7 @@ export const atom = <Type,>(initial: Type | AtomGetter<Type>, name = 'unknown'):
   return {
     name,
     get: () => value,
-    set: (newValue: Type) => {
-      value = newValue
-      subscribers.forEach(callback => callback(value))
-    },
+    set,
     subscribe: (callback: Subscriber<Type>) => {
       subscribers.add(callback)
 
