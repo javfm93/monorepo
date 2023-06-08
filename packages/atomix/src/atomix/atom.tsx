@@ -1,4 +1,4 @@
-import { useEffect, useState, useSyncExternalStore } from 'react'
+import { useSyncExternalStore } from 'react'
 
 export type Subscriber<Type> = (value: Type) => void
 
@@ -9,7 +9,7 @@ export type Atom<Type> = {
   subscribe(callback: Subscriber<Type>): () => void
 }
 
-export type AtomGetter<Type> = (get: <T>(a: Atom<T>) => T) => Type | Promise<Type>
+export type AtomGetter<Type> = (get: <T>(a: Atom<T>) => T) => Type
 
 const isAtomGetter = <Type,>(initial: Type | AtomGetter<Type>): initial is AtomGetter<Type> => {
   return typeof initial === 'function'
@@ -18,7 +18,7 @@ const isAtomGetter = <Type,>(initial: Type | AtomGetter<Type>): initial is AtomG
 const isAsyncResult = <Type,>(value: Type | Promise<Type>): value is Promise<Type> => {
   return value && typeof value === 'object' && 'then' in value && typeof value.then === 'function'
 }
-// todo: better way to handle subscribers
+
 export const atom = <Type,>(initial: Type | AtomGetter<Type>, name = 'unknown'): Atom<Type> => {
   let value = isAtomGetter(initial) ? (null as Type) : initial
 
@@ -43,7 +43,7 @@ export const atom = <Type,>(initial: Type | AtomGetter<Type>, name = 'unknown'):
   const computeAtom = () => {
     if (isAtomGetter(initial)) {
       const newValue = initial(getAtom)
-      
+
       if (isAsyncResult(newValue)) {
         newValue.then(set)
       } else {
@@ -72,17 +72,7 @@ export const atom = <Type,>(initial: Type | AtomGetter<Type>, name = 'unknown'):
 }
 
 export const useAtom = <Type,>(atom: Atom<Type>) => {
-  const [value, setValue] = useState(atom.get())
-
-  useEffect(() => {
-    const unsubscribe = atom.subscribe(newValue => {
-      console.log('triggered subscription of', atom.name)
-      setValue(newValue)
-    })
-    return unsubscribe
-  }, [atom])
-
-  return [value, atom.set] as const
+  return [useSyncExternalStore(atom.subscribe, atom.get), atom.set] as const
 }
 
 export const useAtomValue = <Type,>(atom: Atom<Type>) => {

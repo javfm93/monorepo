@@ -1,21 +1,20 @@
 import './App.css'
 import reactLogo from './assets/react.svg'
-import { atom, useAtom, useAtomValue } from './atomix'
+import { asyncAtom, useAsyncAtom } from './atomix/asyncAtom'
+import { atom, useAtom, useAtomValue } from './atomix/atom'
 import viteLogo from '/vite.svg'
 
 const wait = () => new Promise(resolve => setTimeout(resolve, 1000))
 const countAtom = atom(2)
 const countTimes2Atom = atom(get => get(countAtom) * 2, 'computed count')
-const countWithDelay = atom(async () => {
-  console.log('countWithDelay')
+const countWithDelay = asyncAtom(async () => {
   await wait()
-  console.log('countWithDelay after')
   return 2
 }, 'delayed count')
 
 const DelayedCount = () => {
-  const [delayedCount] = useAtom(countWithDelay)
-  return <span>this count will take 2 seconds and the value is {delayedCount ?? '...'}</span>
+  const [delayedCount] = useAsyncAtom(countWithDelay)
+  return <span>this {delayedCount ?? '...'} will take 2 seconds to load</span>
 }
 
 function App() {
