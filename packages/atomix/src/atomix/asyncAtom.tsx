@@ -13,14 +13,22 @@ export const asyncAtom = <Type,>(
   initial: AsyncAtomGetter<Type>,
   name = 'unknown'
 ): AsyncAtom<Type> => {
+  let value: Type | undefined = undefined
   const subscribers = new Set<Subscriber<Type>>()
+
+  const set = (newValue: Type) => {
+    value = newValue
+    subscribers.forEach(callback => callback(newValue))
+  }
+  const get = async () => {
+    value ? value : (value = await initial())
+    return value
+  }
 
   return {
     name,
-    get: initial,
-    set: (newValue: Type) => {
-      subscribers.forEach(callback => callback(newValue))
-    },
+    get,
+    set,
     subscribe: (callback: Subscriber<Type>) => {
       subscribers.add(callback)
 
