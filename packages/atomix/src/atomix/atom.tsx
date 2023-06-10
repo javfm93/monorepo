@@ -1,5 +1,5 @@
 import { useSyncExternalStore } from 'react'
-import { AsyncAtom } from './asyncAtom'
+import { SuspendedAtom } from './suspendedAtom'
 
 export type Subscriber<Type> = (value: Type) => void
 
@@ -43,6 +43,6 @@ export const useAtomValue = <Type,>(atom: Atom<Type>) => {
   return useSyncExternalStore(atom.subscribe, atom.get)
 }
 
-export const useAtomSetter = <Type,>(atom: Atom<Type> | AsyncAtom<Type>) => {
+export const useAtomSetter = <Type,>(atom: Atom<Type> | SuspendedAtom<Type>) => {
   return atom.set
 }

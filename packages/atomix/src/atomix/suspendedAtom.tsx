@@ -1,6 +1,5 @@
 import { useEffect, useState } from 'react'
 
-import { AsyncAtomGetter } from './asyncAtom'
 import { Subscriber } from './atom'
 
 type Fulfilled<T> = {
@@ -16,6 +15,7 @@ type Pending<T> = {
   result: Promise<T>
 }
 export type SuspendedAtomValue<T> = Fulfilled<T> | Rejected | Pending<T>
+export type AsyncAtomGetter<Type> = () => Promise<Type>
 
 export type SuspendedAtom<Type> = {
   name: string
@@ -38,14 +38,14 @@ export const suspendedAtom = <Type,>(
   }
   const init = () => {
     if (!value) {
-      console.log('init')
+      console.log('init suspended atom')
       const result = initial()
       result.then(set)
       value = { status: 'pending', result }
       return value
     }
 
-    console.log('returning nice', value.result)
+    console.log('returning suspended atom', value.result)
     return value
   }
   const get = () => {
@@ -72,17 +72,28 @@ export const suspendedAtom = <Type,>(
   }
 }
 
-export const useSuspendedAtom = <Type,>(atom: SuspendedAtom<Type>) => {
-  const [_, setValue] = useState<Type>()
+export function useSuspendedAtom<Type>(
+  atom: SuspendedAtom<Type>,
+  suspense: false
+): readonly [Type | undefined, (value: Type) => void]
+export function useSuspendedAtom<Type>(
+  atom: SuspendedAtom<Type>,
+): readonly [Type, (value: Type) => void]
+
+export function useSuspendedAtom<Type>(atom: SuspendedAtom<Type>, suspense = true) {
+  const [value, setValue] = useState<Type>()
 
   useEffect(() => {
+    if (!suspense) {
+      atom.get().then(setValue)
+    }
     const unsubscribe = atom.subscribe(newValue => {
       setValue(newValue)
     })
     return unsubscribe
   }, [atom])
 
-  return [use(atom.init()), atom.set] as const
+  return [suspense ? use(atom.init()) : value, atom.set] as const
 }
 
 export const use = <T,>(value: SuspendedAtomValue<T>): T => {

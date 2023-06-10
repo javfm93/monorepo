@@ -5,7 +5,7 @@ import { SuspendedAtom, SuspendedAtomValue, use } from './suspendedAtom'
 type Get = <T, A extends SuspendedAtom<T> | Atom<T>>(atom: A) => ReturnType<A['get']>
 export type SuspendedComputedAtom<Type> = (get: Get) => Promise<Type>
 
-export const SuspendedComputedAtom = <Type,>(
+export const suspendedComputedAtom = <Type,>(
   initial: SuspendedComputedAtom<Type>,
   name = 'unknown'
 ): SuspendedAtom<Type> => {
@@ -73,15 +73,24 @@ export const SuspendedComputedAtom = <Type,>(
   }
 }
 
-export const useSuspendedComputedAtom = <Type,>(atom: SuspendedAtom<Type>) => {
-  const [_, setValue] = useState<Type>()
+export function useSuspendedComputedAtom<Type>(
+  atom: SuspendedAtom<Type>,
+  suspense: false
+): Type | undefined
+export function useSuspendedComputedAtom<Type>(atom: SuspendedAtom<Type>): Type
+
+export function useSuspendedComputedAtom<Type>(atom: SuspendedAtom<Type>, suspense = true) {
+  const [value, setValue] = useState<Type>()
 
   useEffect(() => {
+    if (!suspense) {
+      atom.get().then(setValue)
+    }
     const unsubscribe = atom.subscribe(newValue => {
       setValue(newValue)
     })
     return unsubscribe
   }, [atom])
 
-  return use(atom.init())
+  return suspense ? use(atom.init()) : value
 }
