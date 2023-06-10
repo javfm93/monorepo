@@ -38,6 +38,7 @@ export const asyncAtom = <Type,>(
     }
   }
 }
+
 export const useAsyncAtom = <Type,>(atom: AsyncAtom<Type>) => {
   const [value, setValue] = useState<Type>()
 

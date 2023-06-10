@@ -1,6 +1,7 @@
 import { Suspense } from 'react'
 import './App.css'
 import reactLogo from './assets/react.svg'
+import { SuspendedComputedAtom, useSuspendedComputedAtom } from './atomix/SuspendedComputedAtom'
 import { asyncComputedAtom, useAsyncComputedAtom } from './atomix/asycComputedAtom'
 import { asyncAtom, useAsyncAtom } from './atomix/asyncAtom'
 import { atom, useAtom, useAtomSetter, useAtomValue } from './atomix/atom'
@@ -26,6 +27,10 @@ const suspendedCountAtom = suspendedAtom(async () => {
 
 const delayedCountTimesMultiplierAtom = asyncComputedAtom(
   async get => (await get(asyncCountAtom)) * get(multiplierAtom)
+)
+
+const suspendedCountTimesMultiplierAtom = SuspendedComputedAtom(
+  async get => (await get(suspendedCountAtom)) * get(multiplierAtom)
 )
 
 function App() {
@@ -60,7 +65,7 @@ function App() {
         <div className="card" style={{ display: 'flex', gap: '1em', flexDirection: 'column' }}>
           <Suspense fallback={<SuspendedSkeleton />}>
             <SuspendedCount />
-            <DelayedMultiplier />
+            <SuspendedMultiplier />
             <button onClick={resetDelayedCount}>reset count</button>
           </Suspense>
         </div>
@@ -144,12 +149,13 @@ const SuspendedSkeleton = () => {
 // TODO:
 const SuspendedMultiplier = () => {
   const [multiplier, setMultiplier] = useAtom(multiplierAtom)
-  const computedCount = useAsyncComputedAtom(delayedCountTimesMultiplierAtom)
+  const computedCount = useSuspendedComputedAtom(suspendedCountTimesMultiplierAtom)
 
+  console.log({ computedCount })
   return (
     <button onClick={() => setMultiplier(multiplier + 1)}>
       <span>
-        the multiplier of the count is {multiplier} and the value is {computedCount ?? '...'}
+        the multiplier of the count is {multiplier} and the value is {computedCount}
       </span>
     </button>
   )

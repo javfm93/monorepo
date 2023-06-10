@@ -1,45 +1,45 @@
 import { useEffect, useState } from 'react'
+import { Atom, Subscriber } from './atom'
+import { SuspendedAtom, SuspendedAtomValue, use } from './suspendedAtom'
 
-import { AsyncAtomGetter } from './asyncAtom'
-import { Subscriber } from './atom'
+type Get = <T, A extends SuspendedAtom<T> | Atom<T>>(atom: A) => ReturnType<A['get']>
+export type SuspendedComputedAtom<Type> = (get: Get) => Promise<Type>
 
-type Fulfilled<T> = {
-  status: 'fulfilled'
-  result: T
-}
-type Rejected = {
-  status: 'rejected'
-  result: unknown
-}
-type Pending<T> = {
-  status: 'pending'
-  result: Promise<T>
-}
-export type SuspendedAtomValue<T> = Fulfilled<T> | Rejected | Pending<T>
-
-export type SuspendedAtom<Type> = {
-  name: string
-  get(): Promise<Type>
-  init(): SuspendedAtomValue<Type>
-  set(value: Type): void
-  subscribe(callback: Subscriber<Type>): () => void
-}
-
-export const suspendedAtom = <Type,>(
-  initial: AsyncAtomGetter<Type>,
+export const SuspendedComputedAtom = <Type,>(
+  initial: SuspendedComputedAtom<Type>,
   name = 'unknown'
 ): SuspendedAtom<Type> => {
+  const subscribeToAtomsDependencies: Get = atom => {
+    const onSubscribe = async () => {
+      const newValue = await onSubscribeComputeAtom()
+      subscribers.forEach(callback => callback(newValue))
+    }
+    atom.subscribe(onSubscribe)
+    return getAtom(atom)
+  }
+
   let value: SuspendedAtomValue<Type> | undefined = undefined
   const subscribers = new Set<Subscriber<Type>>()
+
+  const getAtom: Get = atom => {
+    return atom.get() as ReturnType<(typeof atom)['get']>
+  }
+
+  const onSubscribeComputeAtom = async () => {
+    const newValue = await initial(getAtom)
+    value = { status: 'fulfilled', result: newValue }
+    return newValue
+  }
 
   const set = (newValue: Type) => {
     value = { status: 'fulfilled', result: newValue }
     subscribers.forEach(callback => callback(newValue))
   }
+
   const init = () => {
     if (!value) {
       console.log('init')
-      const result = initial()
+      const result = initial(subscribeToAtomsDependencies)
       result.then(set)
       value = { status: 'pending', result }
       return value
@@ -48,6 +48,7 @@ export const suspendedAtom = <Type,>(
     console.log('returning nice', value.result)
     return value
   }
+
   const get = () => {
     const result = value ? value : init()
 
@@ -72,7 +73,7 @@ export const suspendedAtom = <Type,>(
   }
 }
 
-export const useSuspendedAtom = <Type,>(atom: SuspendedAtom<Type>) => {
+export const useSuspendedComputedAtom = <Type,>(atom: SuspendedAtom<Type>) => {
   const [_, setValue] = useState<Type>()
 
   useEffect(() => {
@@ -82,15 +83,5 @@ export const useSuspendedAtom = <Type,>(atom: SuspendedAtom<Type>) => {
     return unsubscribe
   }, [atom])
 
-  return [use(atom.init()), atom.set] as const
-}
-
-export const use = <T,>(value: SuspendedAtomValue<T>): T => {
-  if (value.status === 'pending') {
-    throw value.result
-  } else if (value.status === 'fulfilled') {
-    return value.result
-  } else {
-    throw value.result
-  }
+  return use(atom.init())
 }

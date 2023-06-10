@@ -21,7 +21,9 @@ export const asyncComputedAtom = <Type,>(
   let value: Type | undefined = undefined
   const subscribers = new Set<Subscriber<Type>>()
 
-  const getAtom: Get = atom => atom.get() as ReturnType<(typeof atom)['get']>
+  const getAtom: Get = atom => {
+    return atom.get() as ReturnType<(typeof atom)['get']>
+  }
 
   const onSubscribeComputeAtom = async () => {
     value = await initial(getAtom)
