@@ -14,22 +14,27 @@ type Pending<T> = {
   status: 'pending'
   result: Promise<T>
 }
-export type SuspendedAtomValue<T> = Fulfilled<T> | Rejected | Pending<T>
+export type AsyncAtomValue<T> = Fulfilled<T> | Rejected | Pending<T>
 export type AsyncAtomGetter<Type> = () => Promise<Type>
 
-export type SuspendedAtom<Type> = {
+export const isAsyncAtomGetter = <Type,>(
+  initial: Type | AsyncAtomGetter<Type>
+): initial is AsyncAtomGetter<Type> => typeof initial === 'function'
+
+export type AsyncAtom<Type> = {
+  type: 'async'
   name: string
   get(): Promise<Type>
-  init(): SuspendedAtomValue<Type>
+  init(): AsyncAtomValue<Type>
   set(value: Type): void
   subscribe(callback: Subscriber<Type>): () => void
 }
 
-export const suspendedAtom = <Type,>(
+export const asyncAtom = <Type,>(
   initial: AsyncAtomGetter<Type>,
   name = 'unknown'
-): SuspendedAtom<Type> => {
-  let value: SuspendedAtomValue<Type> | undefined = undefined
+): AsyncAtom<Type> => {
+  let value: AsyncAtomValue<Type> | undefined = undefined
   const subscribers = new Set<Subscriber<Type>>()
 
   const set = (newValue: Type) => {
@@ -58,6 +63,7 @@ export const suspendedAtom = <Type,>(
   }
 
   return {
+    type: 'async',
     name,
     init,
     get,
@@ -72,15 +78,7 @@ export const suspendedAtom = <Type,>(
   }
 }
 
-export function useSuspendedAtom<Type>(
-  atom: SuspendedAtom<Type>,
-  suspense: false
-): readonly [Type | undefined, (value: Type) => void]
-export function useSuspendedAtom<Type>(
-  atom: SuspendedAtom<Type>,
-): readonly [Type, (value: Type) => void]
-
-export function useSuspendedAtom<Type>(atom: SuspendedAtom<Type>, suspense = true) {
+export function useAsyncAtom<Type>(atom: AsyncAtom<Type>, suspense = true) {
   const [value, setValue] = useState<Type>()
 
   useEffect(() => {
@@ -96,7 +94,30 @@ export function useSuspendedAtom<Type>(atom: SuspendedAtom<Type>, suspense = tru
   return [suspense ? use(atom.init()) : value, atom.set] as const
 }
 
-export const use = <T,>(value: SuspendedAtomValue<T>): T => {
+// export function useAsyncAtomValue<Type>(
+//   atom: SuspendedAtom<Type>,
+//   suspense: false
+// ): Type | undefined
+// export function useAsyncAtomValue<Type>(atom: SuspendedAtom<Type>): Type
+
+export function useAsyncAtomValue<Type>(atom: AsyncAtom<Type>, suspense = true) {
+  const [value, setValue] = useState<Type>()
+
+  useEffect(() => {
+    if (!suspense) {
+      atom.get().then(setValue)
+    }
+    const unsubscribe = atom.subscribe(newValue => {
+      setValue(newValue)
+    })
+    return unsubscribe
+  }, [atom])
+
+  return suspense ? use(atom.init()) : value
+}
+
+// when you throw a pending promise, react stops the rerender but do not break
+export const use = <T,>(value: AsyncAtomValue<T>): T => {
   if (value.status === 'pending') {
     throw value.result
   } else if (value.status === 'fulfilled') {

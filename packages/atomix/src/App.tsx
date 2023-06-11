@@ -2,10 +2,9 @@ import { Suspense } from 'react'
 import './App.css'
 import reactLogo from './assets/react.svg'
 import { suspendedComputedAtom, useSuspendedComputedAtom } from './atomix/SuspendedComputedAtom'
-import { atom, useAtom, useAtomSetter, useAtomValue } from './atomix/atom'
 import { computedAtom, useComputedAtom } from './atomix/computedAtom'
-import { suspendedAtom, useSuspendedAtom } from './atomix/suspendedAtom'
 import viteLogo from '/vite.svg'
+import { atom, useAtom, useAtomSetter, useAtomValue } from './atomix/atom'
 
 export const wait = () => new Promise(resolve => setTimeout(resolve, 2000))
 const titleAtom = atom('Atomix demo!')
@@ -13,10 +12,11 @@ const countAtom = atom(2)
 const multiplierAtom = atom(2)
 const countTimesMultiplierAtom = computedAtom(get => get(countAtom) * get(multiplierAtom))
 
-const suspendedCountAtom = suspendedAtom(async () => {
+const wait2Seconds = async () => {
   await wait()
   return 2
-})
+}
+const suspendedCountAtom = atom(wait2Seconds)
 
 const delayedCountTimesMultiplierAtom = suspendedComputedAtom(
   async get => (await get(suspendedCountAtom)) * get(multiplierAtom)
@@ -92,7 +92,7 @@ const Multiplier = () => {
 }
 
 const DelayedCount = () => {
-  const [delayedCount, setDelayedCount] = useSuspendedAtom(suspendedCountAtom, false)
+  const [delayedCount, setDelayedCount] = useAtom(suspendedCountAtom, false)
   return (
     <button
       disabled={delayedCount === undefined}
@@ -117,7 +117,7 @@ const DelayedMultiplier = () => {
 }
 
 const SuspendedCount = () => {
-  const [suspendedCount, setSuspendedCount] = useSuspendedAtom(suspendedCountAtom)
+  const [suspendedCount, setSuspendedCount] = useAtom(suspendedCountAtom)
   return (
     <button onClick={() => setSuspendedCount(suspendedCount + 1)}>
       <span>this {suspendedCount} was suspended</span>
@@ -139,7 +139,6 @@ const SuspendedSkeleton = () => {
   )
 }
 
-// TODO:
 const SuspendedMultiplier = () => {
   const [multiplier, setMultiplier] = useAtom(multiplierAtom)
   const computedCount = useSuspendedComputedAtom(suspendedCountTimesMultiplierAtom)

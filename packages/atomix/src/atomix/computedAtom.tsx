@@ -1,11 +1,15 @@
 import { useSyncExternalStore } from 'react'
-import { Atom, Subscriber } from './atom'
+import { Subscriber } from './atom'
+import { SyncAtom } from './syncAtom'
 
-type Get = <T>(a: Atom<T>) => T
+type Get = <T>(a: SyncAtom<T>) => T
 export type ComputedAtom<Type> = (get: Get) => Type
 
-export const computedAtom = <Type,>(initial: ComputedAtom<Type>, name = 'unknown'): Atom<Type> => {
-  const subscribeToAtomsDependencies = <T,>(atom: Atom<T>) => {
+export const computedAtom = <Type,>(
+  initial: ComputedAtom<Type>,
+  name = 'unknown'
+): SyncAtom<Type> => {
+  const subscribeToAtomsDependencies = <T,>(atom: SyncAtom<T>) => {
     console.log('get called')
     const onSubscribe = () => {
       console.log('subscribe triggered!')
@@ -15,11 +19,11 @@ export const computedAtom = <Type,>(initial: ComputedAtom<Type>, name = 'unknown
     atom.subscribe(onSubscribe)
     return atom.get()
   }
-  
+
   let value = initial(subscribeToAtomsDependencies)
   const subscribers = new Set<Subscriber<Type>>()
 
-  const getAtom = <T,>(atom: Atom<T>) => atom.get()
+  const getAtom = <T,>(atom: SyncAtom<T>) => atom.get()
 
   const onSubscribeComputeAtom = () => {
     value = initial(getAtom)
@@ -33,6 +37,7 @@ export const computedAtom = <Type,>(initial: ComputedAtom<Type>, name = 'unknown
   const get = () => value
 
   return {
+    type: 'sync',
     name,
     get,
     set,
@@ -46,6 +51,6 @@ export const computedAtom = <Type,>(initial: ComputedAtom<Type>, name = 'unknown
   }
 }
 
-export const useComputedAtom = <Type,>(atom: Atom<Type>) => {
+export const useComputedAtom = <Type,>(atom: SyncAtom<Type>) => {
   return useSyncExternalStore(atom.subscribe, atom.get)
 }

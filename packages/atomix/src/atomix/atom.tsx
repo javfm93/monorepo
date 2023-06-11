@@ -1,48 +1,53 @@
-import { useSyncExternalStore } from 'react'
-import { SuspendedAtom } from './suspendedAtom'
+import {
+  AsyncAtom,
+  AsyncAtomGetter,
+  asyncAtom,
+  isAsyncAtomGetter,
+  useAsyncAtom,
+  useAsyncAtomValue
+} from './asyncAtom'
+import { SyncAtom, syncAtom, useSyncAtom, useSyncAtomValue } from './syncAtom'
 
 export type Subscriber<Type> = (value: Type) => void
 
-export type Atom<Type> = {
-  name: string
-  get(): Type
-  set(value: Type): void
-  subscribe(callback: Subscriber<Type>): () => void
-}
-
-export const atom = <Type,>(initial: Type, name = 'unknown'): Atom<Type> => {
-  let value = initial
-  const subscribers = new Set<Subscriber<Type>>()
-
-  const set = (newValue: Type) => {
-    value = newValue
-    subscribers.forEach(callback => callback(value))
-  }
-
-  const get = () => value
-
-  return {
-    name,
-    get,
-    set,
-    subscribe: (callback: Subscriber<Type>) => {
-      subscribers.add(callback)
-
-      return () => {
-        subscribers.delete(callback)
-      }
-    }
+export function atom<Type>(initial: AsyncAtomGetter<Type>): AsyncAtom<Type>
+export function atom<Type>(initial: Type): SyncAtom<Type>
+export function atom<Type>(
+  initial: Type | AsyncAtomGetter<Type>,
+  name = 'unknown'
+): SyncAtom<Type> | AsyncAtom<Type> {
+  if (isAsyncAtomGetter(initial)) {
+    return asyncAtom(initial, name)
+  } else {
+    return syncAtom(initial, name)
   }
 }
 
-export const useAtom = <Type,>(atom: Atom<Type>) => {
-  return [useSyncExternalStore(atom.subscribe, atom.get), atom.set] as const
+export function useAtom<Type>(
+  atom: AsyncAtom<Type>,
+  suspense: false
+): readonly [Type | undefined, (value: Type) => void]
+export function useAtom<Type>(atom: AsyncAtom<Type>): readonly [Type, (value: Type) => void]
+export function useAtom<Type>(atom: SyncAtom<Type>): readonly [Type, (value: Type) => void]
+export function useAtom<Type>(atom: SyncAtom<Type> | AsyncAtom<Type>, suspense = true) {
+  if (atom.type === 'sync') {
+    return useSyncAtom(atom)
+  } else {
+    return useAsyncAtom(atom, suspense)
+  }
 }
 
-export const useAtomValue = <Type,>(atom: Atom<Type>) => {
-  return useSyncExternalStore(atom.subscribe, atom.get)
+export function useAtomValue<Type>(atom: AsyncAtom<Type>, suspense: false): Type | undefined
+export function useAtomValue<Type>(atom: AsyncAtom<Type>): Type
+export function useAtomValue<Type>(atom: SyncAtom<Type>): Type
+export function useAtomValue<Type>(atom: SyncAtom<Type> | AsyncAtom<Type>, suspense = true) {
+  if (atom.type === 'sync') {
+    return useSyncAtomValue(atom)
+  } else {
+    return useAsyncAtomValue(atom, suspense)
+  }
 }
 
-export const useAtomSetter = <Type,>(atom: Atom<Type> | SuspendedAtom<Type>) => {
+export const useAtomSetter = <Type,>(atom: SyncAtom<Type> | AsyncAtom<Type>) => {
   return atom.set
 }

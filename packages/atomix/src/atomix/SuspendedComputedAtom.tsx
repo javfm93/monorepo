@@ -1,14 +1,15 @@
 import { useEffect, useState } from 'react'
-import { Atom, Subscriber } from './atom'
-import { SuspendedAtom, SuspendedAtomValue, use } from './suspendedAtom'
+import { AsyncAtom, AsyncAtomValue, use } from './asyncAtom'
+import { Subscriber } from './atom'
+import { SyncAtom } from './syncAtom'
 
-type Get = <T, A extends SuspendedAtom<T> | Atom<T>>(atom: A) => ReturnType<A['get']>
+type Get = <T, A extends AsyncAtom<T> | SyncAtom<T>>(atom: A) => ReturnType<A['get']>
 export type SuspendedComputedAtom<Type> = (get: Get) => Promise<Type>
 
 export const suspendedComputedAtom = <Type,>(
   initial: SuspendedComputedAtom<Type>,
   name = 'unknown'
-): SuspendedAtom<Type> => {
+): AsyncAtom<Type> => {
   const subscribeToAtomsDependencies: Get = atom => {
     const onSubscribe = async () => {
       const newValue = await onSubscribeComputeAtom()
@@ -18,7 +19,7 @@ export const suspendedComputedAtom = <Type,>(
     return getAtom(atom)
   }
 
-  let value: SuspendedAtomValue<Type> | undefined = undefined
+  let value: AsyncAtomValue<Type> | undefined = undefined
   const subscribers = new Set<Subscriber<Type>>()
 
   const getAtom: Get = atom => {
@@ -59,6 +60,7 @@ export const suspendedComputedAtom = <Type,>(
   }
 
   return {
+    type: 'async',
     name,
     init,
     get,
@@ -74,12 +76,12 @@ export const suspendedComputedAtom = <Type,>(
 }
 
 export function useSuspendedComputedAtom<Type>(
-  atom: SuspendedAtom<Type>,
+  atom: AsyncAtom<Type>,
   suspense: false
 ): Type | undefined
-export function useSuspendedComputedAtom<Type>(atom: SuspendedAtom<Type>): Type
+export function useSuspendedComputedAtom<Type>(atom: AsyncAtom<Type>): Type
 
-export function useSuspendedComputedAtom<Type>(atom: SuspendedAtom<Type>, suspense = true) {
+export function useSuspendedComputedAtom<Type>(atom: AsyncAtom<Type>, suspense = true) {
   const [value, setValue] = useState<Type>()
 
   useEffect(() => {
