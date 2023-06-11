@@ -1,8 +1,8 @@
 import { Suspense } from 'react'
 import './App.css'
 import reactLogo from './assets/react.svg'
-import { atom, useAtom, useAtomSetter, useAtomValue } from './atomix/atom'
-import { useTotalComputedAtom } from './atomix/totalComputedAtom'
+import { atom } from './atomix/atom'
+import { useAtom, useAtomSetter, useAtomValue } from './atomix/useAtom'
 import viteLogo from '/vite.svg'
 
 export const wait = () => new Promise(resolve => setTimeout(resolve, 2000))
@@ -109,8 +109,8 @@ const DelayedCount = () => {
 
 const DelayedMultiplier = () => {
   const [multiplier, setMultiplier] = useAtom(multiplierAtom)
-  const computedCount = useTotalComputedAtom(delayedCountTimesMultiplierAtom, false)
-  const computedCount2 = useTotalComputedAtom(delayedCountTimesMultiplierAtom2, false)
+  const computedCount = useAtomValue(delayedCountTimesMultiplierAtom, false)
+  const computedCount2 = useAtomValue(delayedCountTimesMultiplierAtom2, false)
 
   console.log({ computedCount }, { computedCount2 })
   return (
@@ -147,7 +147,7 @@ const SuspendedSkeleton = () => {
 
 const SuspendedMultiplier = () => {
   const [multiplier, setMultiplier] = useAtom(multiplierAtom)
-  const computedCount = useTotalComputedAtom(suspendedCountTimesMultiplierAtom)
+  const computedCount = useAtomValue(suspendedCountTimesMultiplierAtom)
 
   return (
     <button onClick={() => setMultiplier(multiplier + 1)}>
