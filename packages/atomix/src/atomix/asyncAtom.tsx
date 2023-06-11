@@ -3,15 +3,15 @@ import { useEffect, useState } from 'react'
 import { Subscriber } from './atom'
 import { ComputedAtomGetter } from './computedAtom'
 
-type Fulfilled<T> = {
+export type Fulfilled<T> = {
   status: 'fulfilled'
   result: T
 }
-type Rejected = {
+export type Rejected = {
   status: 'rejected'
   result: unknown
 }
-type Pending<T> = {
+export type Pending<T> = {
   status: 'pending'
   result: T
 }
@@ -97,12 +97,6 @@ export function useAsyncAtom<Type>(atom: AsyncAtom<Type>, suspense = true) {
 
   return [suspense ? use(atom.init()) : value, (v: Awaited<Type>) => atom.set(v)] as const
 }
-
-// export function useAsyncAtomValue<Type>(
-//   atom: SuspendedAtom<Type>,
-//   suspense: false
-// ): Type | undefined
-// export function useAsyncAtomValue<Type>(atom: SuspendedAtom<Type>): Type
 
 export function useAsyncAtomValue<Type>(atom: AsyncAtom<Type>, suspense = true) {
   const [value, setValue] = useState<Type>()

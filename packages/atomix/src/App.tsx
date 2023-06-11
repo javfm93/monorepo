@@ -1,15 +1,10 @@
 import { Suspense } from 'react'
 import './App.css'
 import reactLogo from './assets/react.svg'
-import {
-  SuspendedAtomGetter,
-  suspendedComputedAtom,
-  useSuspendedComputedAtom
-} from './atomix/SuspendedComputedAtom'
 import { atom, useAtom, useAtomSetter, useAtomValue } from './atomix/atom'
 import { AtomGetter } from './atomix/computedAtom'
 import viteLogo from '/vite.svg'
-import { useAsyncAtom } from './atomix/asyncAtom'
+import { SuspendedAtomGetter, suspendedComputedAtom, useSuspendedComputedAtom } from './atomix/suspendedComputedAtom'
 
 export const wait = () => new Promise(resolve => setTimeout(resolve, 2000))
 const titleAtom = atom('Atomix demo!')

@@ -1,4 +1,4 @@
-import { SuspendedComputedAtomGetter } from './SuspendedComputedAtom'
+import { SuspendedComputedAtomGetter } from './suspendedComputedAtom'
 import {
   AsyncAtom,
   AsyncAtomGetter,
