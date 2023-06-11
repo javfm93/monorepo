@@ -1,107 +1,81 @@
+import { AtomResult, fulfil, pending } from './atomResult'
+
 export type Subscriber<Type> = (value: Type) => void
-export type Atom<Type> = {
-  type: 'async' | 'sync'
-  name: string
-  get(): Type
-  init(): AtomValue<Type>
-  set(value: Type): void
-  subscribe(callback: Subscriber<Type>): () => void
-}
-export type Fulfilled<T> = {
-  status: 'fulfilled'
-  result: T
-}
-export type Rejected = {
-  status: 'rejected'
-  result: unknown
-}
-export type Pending<T> = {
-  status: 'pending'
-  result: T
-}
-export type AtomValue<T> = Fulfilled<T> | Rejected | Pending<T>
+export type AtomGetter = <A>(atom: A) => A extends Atom<infer T> ? T : never
+export type ComputedAtom<Type> = (get: AtomGetter) => Type
+export const isComputedAtom = <Type,>(
+  initial: Type | ComputedAtom<Type>
+): initial is ComputedAtom<Type> => typeof initial === 'function'
 
-export type AtomGetter = <T, A extends Atom<T>>(atom: A) => ReturnType<A['get']>
-export type ComputedAtomGetter<Type> = (get: AtomGetter) => Type
+export class Atom<Type> {
+  private result: AtomResult<Type> | undefined
+  private subscribers = new Set<Subscriber<Type>>()
 
-export const isComputedAtomGetter = <Type,>(
-  initial: Type | ComputedAtomGetter<Type>
-): initial is ComputedAtomGetter<Type> => typeof initial === 'function'
+  constructor(initial: ComputedAtom<Type>)
+  constructor(initial: Type)
+  constructor(private initialValue: Type | ComputedAtom<Type>, readonly name = 'unknown') {}
 
-export function atom<Type>(initial: ComputedAtomGetter<Type>): Atom<Type>
-export function atom<Type>(initial: Type): Atom<Type>
-export function atom<Type>(initial: Type | ComputedAtomGetter<Type>, name = 'unknown'): Atom<Type> {
-  const subscribeToAtomsDependencies: AtomGetter = atom => {
-    const onSubscribe = async () => {
-      const newValue = await onSubscribeComputeAtom()
-      subscribers.forEach(callback => callback(newValue))
+  getResult = () => {
+    if (this.wasInitialized(this.result)) {
+      return this.result
     }
-    atom.subscribe(onSubscribe)
-    return getAtom(atom)
-  }
-
-  let value: AtomValue<Type> | undefined = undefined
-  const subscribers = new Set<Subscriber<Type>>()
-
-  const getAtom: AtomGetter = atom => {
-    return atom.get() as ReturnType<(typeof atom)['get']>
-  }
-
-  const onSubscribeComputeAtom = async () => {
-    const newValue = isComputedAtomGetter(initial) ? await initial(getAtom) : initial
-    value = { status: 'fulfilled', result: newValue }
-    return newValue
-  }
-
-  const set = (newValue: Type) => {
-    value = { status: 'fulfilled', result: newValue }
-    subscribers.forEach(callback => callback(newValue))
-  }
-
-  const init = () => {
-    if (value) {
-      return value
-    } else {
-      if (isComputedAtomGetter(initial)) {
-        const result = initial(subscribeToAtomsDependencies)
-
-        if (result instanceof Promise) {
-          result.then(set)
-          value = { status: 'pending', result }
-          return value
-        } else {
-          set(result)
-          return { status: 'fulfilled', result } as Fulfilled<Type>
-        }
-      } else {
-        set(initial)
-        return { status: 'fulfilled', result: initial } as Fulfilled<Type>
-      }
+    if (isComputedAtom(this.initialValue)) {
+      return this.getComputedValue(this.initialValue)
     }
+    this.set(this.initialValue)
+    return fulfil(this.initialValue)
   }
 
-  const get = () => {
-    const result = value ? value : init()
+  set = (newValue: Type) => {
+    this.result = fulfil(newValue)
+    this.subscribers.forEach(callback => callback(newValue))
+  }
+
+  getValue = () => {
+    const result = this.result ? this.result : this.getResult()
 
     if (result.status === 'rejected') {
-      throw result.result
+      throw result.value
     }
-    return result.result
+    return result.value
   }
 
-  return {
-    type: 'async',
-    name,
-    init,
-    get,
-    set,
-    subscribe: (callback: Subscriber<Type>) => {
-      subscribers.add(callback)
+  subscribe = (callback: Subscriber<Type>) => {
+    this.subscribers.add(callback)
 
-      return () => {
-        subscribers.delete(callback)
-      }
+    return () => {
+      this.subscribers.delete(callback)
     }
+  }
+
+  private wasInitialized = (result?: AtomResult<Type>): result is AtomResult<Type> => !!result
+
+  private getComputedValue = (computedAtom: ComputedAtom<Type>) => {
+    const result = computedAtom(this.subscribeAndGetValue as AtomGetter)
+
+    if (result instanceof Promise) {
+      result.then(this.set)
+      this.result = pending(result)
+      return this.result
+    } else {
+      this.set(result)
+      return fulfil(result)
+    }
+  }
+
+  private subscribeAndGetValue = <T,>(atomDependency: Atom<T>) => {
+    atomDependency.subscribe(this.onNewDependencyValue)
+    return this.getAtom(atomDependency)
+  }
+
+  private onNewDependencyValue = async () => {
+    if (isComputedAtom(this.initialValue)) {
+      const newValue = await this.initialValue(this.getAtom as AtomGetter)
+      this.set(newValue)
+    }
+  }
+
+  private getAtom = <T,>(atom: Atom<T>) => {
+    return atom.getValue()
   }
 }
-

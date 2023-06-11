@@ -1,31 +1,29 @@
 import { Suspense } from 'react'
 import './App.css'
 import reactLogo from './assets/react.svg'
-import { atom } from './atomix/atom'
-import { useAtom, useAtomSetter, useAtomValue } from './atomix/useAtom'
+import { Atom } from './atomix/atom'
+import { useAtom } from './atomix/useAtom'
+import { useAtomSetter } from './atomix/useAtomSetter'
+import { useAtomValue } from './atomix/useAtomValue'
 import viteLogo from '/vite.svg'
 
 export const wait = () => new Promise(resolve => setTimeout(resolve, 2000))
-const titleAtom = atom('Atomix demo!')
-const countAtom = atom(2)
-const multiplierAtom = atom(2)
-const countTimesMultiplierAtom = atom(get => get(countAtom) * get(multiplierAtom))
+const titleAtom = new Atom('Atomix demo!')
+const countAtom = new Atom(2)
+const multiplierAtom = new Atom(2)
+const countTimesMultiplierAtom = new Atom(get => get(countAtom) * get(multiplierAtom))
 
 const wait2Seconds = async () => {
   await wait()
   return 2
 }
-const suspendedCountAtom = atom(wait2Seconds)
+const suspendedCountAtom = new Atom(wait2Seconds)
 
-const delayedCountTimesMultiplierAtom = atom(
+const delayedCountTimesMultiplierAtom = new Atom(
   async get => (await get(suspendedCountAtom)) * get(multiplierAtom)
 )
 
-const delayedCountTimesMultiplierAtom2 = atom(
-  async get => (await get(suspendedCountAtom)) * get(multiplierAtom)
-)
-
-const suspendedCountTimesMultiplierAtom = atom(
+const suspendedCountTimesMultiplierAtom = new Atom(
   async get => (await get(suspendedCountAtom)) * get(multiplierAtom)
 )
 
@@ -110,9 +108,7 @@ const DelayedCount = () => {
 const DelayedMultiplier = () => {
   const [multiplier, setMultiplier] = useAtom(multiplierAtom)
   const computedCount = useAtomValue(delayedCountTimesMultiplierAtom, false)
-  const computedCount2 = useAtomValue(delayedCountTimesMultiplierAtom2, false)
 
-  console.log({ computedCount }, { computedCount2 })
   return (
     <button onClick={() => setMultiplier(multiplier + 1)}>
       <span>
@@ -157,4 +153,5 @@ const SuspendedMultiplier = () => {
     </button>
   )
 }
+
 export default App
