@@ -1,7 +1,6 @@
 import { useEffect, useState } from 'react'
 
-import { Subscriber } from './atom'
-import { ComputedAtomGetter } from './computedAtom'
+import { Atom, Subscriber } from './atom'
 
 export type Fulfilled<T> = {
   status: 'fulfilled'
@@ -18,10 +17,6 @@ export type Pending<T> = {
 export type AsyncAtomValue<T> = Fulfilled<T> | Rejected | Pending<T>
 export type AsyncAtomGetter<Type> = () => Type
 
-export const isAsyncAtomGetter = <Type,>(
-  initial: Type | AsyncAtomGetter<Type> | ComputedAtomGetter<Type>
-): initial is AsyncAtomGetter<Type> => typeof initial === 'function' && initial.length === 0
-
 export type AsyncAtom<Type> = {
   type: 'async'
   name: string
@@ -31,55 +26,7 @@ export type AsyncAtom<Type> = {
   subscribe(callback: Subscriber<Type>): () => void
 }
 
-export const asyncAtom = <Type,>(
-  initial: AsyncAtomGetter<Type>,
-  name = 'unknown'
-): AsyncAtom<Type> => {
-  let value: AsyncAtomValue<Type> | undefined = undefined
-  const subscribers = new Set<Subscriber<Type>>()
-
-  const set = (newValue: Type) => {
-    value = { status: 'fulfilled', result: newValue }
-    subscribers.forEach(callback => callback(newValue))
-  }
-  const init = () => {
-    if (!value) {
-      const result = initial()
-      if (result instanceof Promise) {
-        result.then(set)
-      }
-      value = { status: 'pending', result }
-      return value
-    }
-
-    return value
-  }
-  const get = () => {
-    const result = value ? value : init()
-
-    if (result.status === 'rejected') {
-      throw result.result
-    }
-    return result.result
-  }
-
-  return {
-    type: 'async',
-    name,
-    init,
-    get,
-    set,
-    subscribe: (callback: Subscriber<Type>) => {
-      subscribers.add(callback)
-
-      return () => {
-        subscribers.delete(callback)
-      }
-    }
-  }
-}
-
-export function useAsyncAtom<Type>(atom: AsyncAtom<Type>, suspense = true) {
+export function useAsyncAtom<Type>(atom: Atom<Type>, suspense = true) {
   const [value, setValue] = useState<Awaited<Type>>()
 
   useEffect(() => {
@@ -98,7 +45,7 @@ export function useAsyncAtom<Type>(atom: AsyncAtom<Type>, suspense = true) {
   return [suspense ? use(atom.init()) : value, (v: Awaited<Type>) => atom.set(v)] as const
 }
 
-export function useAsyncAtomValue<Type>(atom: AsyncAtom<Type>, suspense = true) {
+export function useAsyncAtomValue<Type>(atom: Atom<Type>, suspense = true) {
   const [value, setValue] = useState<Type>()
 
   useEffect(() => {

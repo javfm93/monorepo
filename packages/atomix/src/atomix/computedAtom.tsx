@@ -1,14 +1,9 @@
 import { useSyncExternalStore } from 'react'
-import { AsyncAtomGetter } from './asyncAtom'
 import { Subscriber } from './atom'
 import { SyncAtom } from './syncAtom'
 
 export type AtomGetter = <T>(a: SyncAtom<T>) => T
 export type ComputedAtomGetter<Type> = (get: AtomGetter) => Type
-
-export const isComputedAtomGetter = <Type,>(
-  initial: Type | AsyncAtomGetter<Type> | ComputedAtomGetter<Type>
-): initial is ComputedAtomGetter<Type> => typeof initial === 'function' && initial.length === 1
 
 export const computedAtom = <Type,>(
   initial: ComputedAtomGetter<Type>,

@@ -1,15 +1,24 @@
-import { AsyncAtom, AsyncAtomValue, Fulfilled, useAsyncAtom, useAsyncAtomValue } from './asyncAtom'
-import { Subscriber } from './atom'
-import { SyncAtom, useSyncAtom, useSyncAtomValue } from './syncAtom'
-import { TotalAtom } from './totalAtom'
+import {
+  AsyncAtom,
+  AsyncAtomGetter,
+  AsyncAtomValue,
+  Fulfilled,
+  useAsyncAtomValue
+} from './asyncAtom'
+import { Atom, Subscriber } from './atom'
+import { useSyncAtomValue } from './syncAtom'
 
-export type TotalAtomGetter = <T, A extends TotalAtom<T>>(atom: A) => ReturnType<A['get']>
+export type TotalAtomGetter = <T, A extends Atom<T>>(atom: A) => ReturnType<A['get']>
 export type TotalComputedAtomGetter<Type> = (get: TotalAtomGetter) => Type
+
+export const isComputedAtomGetter = <Type,>(
+  initial: Type | AsyncAtomGetter<Type> | TotalComputedAtomGetter<Type>
+): initial is TotalComputedAtomGetter<Type> => typeof initial === 'function'
 
 export const totalComputedAtom = <Type,>(
   initial: TotalComputedAtomGetter<Type>,
   name = 'unknown'
-): TotalAtom<Type> => {
+): Atom<Type> => {
   const subscribeToAtomsDependencies: TotalAtomGetter = atom => {
     const onSubscribe = async () => {
       const newValue = await onSubscribeComputeAtom()
@@ -79,12 +88,15 @@ export const totalComputedAtom = <Type,>(
   }
 }
 
-export function useTotalComputedAtom<Type>(atom: TotalAtom<Type>, suspense: false): Type | undefined
-export function useTotalComputedAtom<Type>(atom: TotalAtom<Type>): Type
+export function useTotalComputedAtom<Type>(
+  atom: Atom<Type>,
+  suspense: false
+): Awaited<Type> | undefined
+export function useTotalComputedAtom<Type>(atom: Atom<Type>): Awaited<Type>
 
-export function useTotalComputedAtom<Type>(atom: TotalAtom<Type>, suspense = true) {
+export function useTotalComputedAtom<Type>(atom: Atom<Type>, suspense = true) {
   if (atom.type === 'sync') {
-    return useSyncAtomValue(atom as SyncAtom<Type>)
+    return useSyncAtomValue(atom)
   } else {
     return useAsyncAtomValue(atom as AsyncAtom<Type>, suspense)
   }

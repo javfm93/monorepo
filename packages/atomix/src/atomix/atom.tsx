@@ -1,47 +1,42 @@
-import { SuspendedComputedAtomGetter } from './suspendedComputedAtom'
+import { AsyncAtomValue, useAsyncAtom, useAsyncAtomValue } from './asyncAtom'
+import { syncAtom, useSyncAtom, useSyncAtomValue } from './syncAtom'
 import {
-  AsyncAtom,
-  AsyncAtomGetter,
-  asyncAtom,
-  isAsyncAtomGetter,
-  useAsyncAtom,
-  useAsyncAtomValue
-} from './asyncAtom'
-import { ComputedAtomGetter, computedAtom, isComputedAtomGetter } from './computedAtom'
-import { SyncAtom, syncAtom, useSyncAtom, useSyncAtomValue } from './syncAtom'
+  TotalComputedAtomGetter,
+  isComputedAtomGetter,
+  totalComputedAtom
+} from './totalComputedAtom'
 
 export type Subscriber<Type> = (value: Type) => void
+export type Atom<Type> = {
+  type: 'async' | 'sync'
+  name: string
+  get(): Type
+  init(): AsyncAtomValue<Type>
+  set(value: Type): void
+  subscribe(callback: Subscriber<Type>): () => void
+}
 
-export function atom<Type>(initial: AsyncAtomGetter<Type>): AsyncAtom<Type>
-export function atom<Type>(initial: ComputedAtomGetter<Type>): SyncAtom<Type>
-export function atom<Type>(initial: SuspendedComputedAtomGetter<Type>): AsyncAtom<Type>
-export function atom<Type>(initial: Type): SyncAtom<Type>
+export function atom<Type>(initial: TotalComputedAtomGetter<Type>): Atom<Type>
+export function atom<Type>(initial: Type): Atom<Type>
 export function atom<Type>(
-  initial: Type | AsyncAtomGetter<Type> | ComputedAtomGetter<Type>,
+  initial: Type | TotalComputedAtomGetter<Type>,
   name = 'unknown'
-): SyncAtom<Type> | AsyncAtom<Type> {
-  if (typeof initial === 'function') {
-    if (isAsyncAtomGetter(initial)) {
-      return asyncAtom(initial, name)
-    } else if (isComputedAtomGetter(initial)) {
-      // TODO: asyncComputedAtom
-      return computedAtom(initial, name)
-    }
-    throw new Error('Invalid atom initial value')
+): Atom<Type> {
+  if (isComputedAtomGetter(initial)) {
+    return totalComputedAtom(initial, name)
   } else {
     return syncAtom(initial, name)
   }
 }
 
 export function useAtom<Type>(
-  atom: AsyncAtom<Type>,
+  atom: Atom<Type>,
   suspense: false
-): readonly [Awaited<Type> | undefined, (value: Awaited<Type>) => void]
+): readonly [Awaited<Type> | undefined, (v: Awaited<Type>) => void]
 export function useAtom<Type>(
-  atom: AsyncAtom<Type>
-): readonly [Awaited<Type>, (value: Awaited<Type>) => void]
-export function useAtom<Type>(atom: SyncAtom<Type>): readonly [Type, (value: Type) => void]
-export function useAtom<Type>(atom: SyncAtom<Type> | AsyncAtom<Type>, suspense = true) {
+  atom: Atom<Type>
+): readonly [Awaited<Type>, (v: Awaited<Type>) => void]
+export function useAtom<Type>(atom: Atom<Type>, suspense = true) {
   if (atom.type === 'sync') {
     return useSyncAtom(atom)
   } else {
@@ -49,10 +44,7 @@ export function useAtom<Type>(atom: SyncAtom<Type> | AsyncAtom<Type>, suspense =
   }
 }
 
-export function useAtomValue<Type>(atom: AsyncAtom<Type>, suspense: false): Type | undefined
-export function useAtomValue<Type>(atom: AsyncAtom<Type>): Type
-export function useAtomValue<Type>(atom: SyncAtom<Type>): Type
-export function useAtomValue<Type>(atom: SyncAtom<Type> | AsyncAtom<Type>, suspense = true) {
+export function useAtomValue<Type>(atom: Atom<Type>, suspense = true) {
   if (atom.type === 'sync') {
     return useSyncAtomValue(atom)
   } else {
@@ -60,8 +52,8 @@ export function useAtomValue<Type>(atom: SyncAtom<Type> | AsyncAtom<Type>, suspe
   }
 }
 
-export function useAtomSetter<Type>(atom: AsyncAtom<Type>): (value: Awaited<Type>) => void
-export function useAtomSetter<Type>(atom: SyncAtom<Type>): (value: Type) => void
-export function useAtomSetter<Type>(atom: SyncAtom<Type> | AsyncAtom<Type>) {
+export function useAtomSetter<Type>(atom: Atom<Type>): (value: Awaited<Type>) => void
+export function useAtomSetter<Type>(atom: Atom<Type>): (value: Type) => void
+export function useAtomSetter<Type>(atom: Atom<Type>) {
   return atom.set
 }

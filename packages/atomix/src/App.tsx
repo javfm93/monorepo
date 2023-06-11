@@ -2,15 +2,14 @@ import { Suspense } from 'react'
 import './App.css'
 import reactLogo from './assets/react.svg'
 import { atom, useAtom, useAtomSetter, useAtomValue } from './atomix/atom'
-import { AtomGetter } from './atomix/computedAtom'
+import { useTotalComputedAtom } from './atomix/totalComputedAtom'
 import viteLogo from '/vite.svg'
-import { SuspendedAtomGetter, suspendedComputedAtom, useSuspendedComputedAtom } from './atomix/suspendedComputedAtom'
 
 export const wait = () => new Promise(resolve => setTimeout(resolve, 2000))
 const titleAtom = atom('Atomix demo!')
 const countAtom = atom(2)
 const multiplierAtom = atom(2)
-const countTimesMultiplierAtom = atom((get: AtomGetter) => get(countAtom) * get(multiplierAtom))
+const countTimesMultiplierAtom = atom(get => get(countAtom) * get(multiplierAtom))
 
 const wait2Seconds = async () => {
   await wait()
@@ -18,15 +17,15 @@ const wait2Seconds = async () => {
 }
 const suspendedCountAtom = atom(wait2Seconds)
 
-const delayedCountTimesMultiplierAtom = suspendedComputedAtom(
+const delayedCountTimesMultiplierAtom = atom(
   async get => (await get(suspendedCountAtom)) * get(multiplierAtom)
 )
 
 const delayedCountTimesMultiplierAtom2 = atom(
-  async (get: SuspendedAtomGetter) => (await get(suspendedCountAtom)) * get(multiplierAtom)
+  async get => (await get(suspendedCountAtom)) * get(multiplierAtom)
 )
 
-const suspendedCountTimesMultiplierAtom = suspendedComputedAtom(
+const suspendedCountTimesMultiplierAtom = atom(
   async get => (await get(suspendedCountAtom)) * get(multiplierAtom)
 )
 
@@ -110,8 +109,8 @@ const DelayedCount = () => {
 
 const DelayedMultiplier = () => {
   const [multiplier, setMultiplier] = useAtom(multiplierAtom)
-  const computedCount = useSuspendedComputedAtom(delayedCountTimesMultiplierAtom, false)
-  const computedCount2 = useSuspendedComputedAtom(delayedCountTimesMultiplierAtom2, false)
+  const computedCount = useTotalComputedAtom(delayedCountTimesMultiplierAtom, false)
+  const computedCount2 = useTotalComputedAtom(delayedCountTimesMultiplierAtom2, false)
 
   console.log({ computedCount }, { computedCount2 })
   return (
@@ -148,7 +147,7 @@ const SuspendedSkeleton = () => {
 
 const SuspendedMultiplier = () => {
   const [multiplier, setMultiplier] = useAtom(multiplierAtom)
-  const computedCount = useSuspendedComputedAtom(suspendedCountTimesMultiplierAtom)
+  const computedCount = useTotalComputedAtom(suspendedCountTimesMultiplierAtom)
 
   return (
     <button onClick={() => setMultiplier(multiplier + 1)}>

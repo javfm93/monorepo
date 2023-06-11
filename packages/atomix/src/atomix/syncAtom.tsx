@@ -1,6 +1,6 @@
 import { useSyncExternalStore } from 'react'
-import { Subscriber } from './atom'
-
+import { Fulfilled } from './asyncAtom'
+import { Atom, Subscriber } from './atom'
 
 export type SyncAtom<Type> = {
   type: 'sync'
@@ -10,7 +10,7 @@ export type SyncAtom<Type> = {
   subscribe(callback: Subscriber<Type>): () => void
 }
 
-export const syncAtom = <Type,>(initial: Type, name = 'unknown'): SyncAtom<Type> => {
+export const syncAtom = <Type,>(initial: Type, name = 'unknown'): Atom<Type> => {
   let value = initial
   const subscribers = new Set<Subscriber<Type>>()
 
@@ -20,11 +20,13 @@ export const syncAtom = <Type,>(initial: Type, name = 'unknown'): SyncAtom<Type>
   }
 
   const get = () => value
+  const init = () => ({ status: 'fulfilled', result: initial } as Fulfilled<Type>)
 
   return {
     type: 'sync',
     name,
     get,
+    init,
     set,
     subscribe: (callback: Subscriber<Type>) => {
       subscribers.add(callback)
@@ -36,10 +38,10 @@ export const syncAtom = <Type,>(initial: Type, name = 'unknown'): SyncAtom<Type>
   }
 }
 
-export const useSyncAtom = <Type,>(atom: SyncAtom<Type>) => {
+export const useSyncAtom = <Type,>(atom: Atom<Type>) => {
   return [useSyncExternalStore(atom.subscribe, atom.get), atom.set] as const
 }
 
-export const useSyncAtomValue = <Type,>(atom: SyncAtom<Type>) => {
+export const useSyncAtomValue = <Type,>(atom: Atom<Type>) => {
   return useSyncExternalStore(atom.subscribe, atom.get)
 }
