@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 
 import { Subscriber } from './atom'
+import { ComputedAtomGetter } from './computedAtom'
 
 type Fulfilled<T> = {
   status: 'fulfilled'
@@ -18,8 +19,8 @@ export type AsyncAtomValue<T> = Fulfilled<T> | Rejected | Pending<T>
 export type AsyncAtomGetter<Type> = () => Promise<Type>
 
 export const isAsyncAtomGetter = <Type,>(
-  initial: Type | AsyncAtomGetter<Type>
-): initial is AsyncAtomGetter<Type> => typeof initial === 'function'
+  initial: Type | AsyncAtomGetter<Type> | ComputedAtomGetter<Type>
+): initial is AsyncAtomGetter<Type> => typeof initial === 'function' && initial.length === 0
 
 export type AsyncAtom<Type> = {
   type: 'async'
@@ -43,14 +44,12 @@ export const asyncAtom = <Type,>(
   }
   const init = () => {
     if (!value) {
-      console.log('init suspended atom')
       const result = initial()
       result.then(set)
       value = { status: 'pending', result }
       return value
     }
 
-    console.log('returning suspended atom', value.result)
     return value
   }
   const get = () => {

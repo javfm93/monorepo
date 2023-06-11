@@ -1,3 +1,4 @@
+import { SuspendedComputedAtomGetter } from './SuspendedComputedAtom'
 import {
   AsyncAtom,
   AsyncAtomGetter,
@@ -6,18 +7,26 @@ import {
   useAsyncAtom,
   useAsyncAtomValue
 } from './asyncAtom'
+import { ComputedAtomGetter, computedAtom, isComputedAtomGetter } from './computedAtom'
 import { SyncAtom, syncAtom, useSyncAtom, useSyncAtomValue } from './syncAtom'
 
 export type Subscriber<Type> = (value: Type) => void
 
 export function atom<Type>(initial: AsyncAtomGetter<Type>): AsyncAtom<Type>
+export function atom<Type>(initial: ComputedAtomGetter<Type>): SyncAtom<Type>
+export function atom<Type>(initial: SuspendedComputedAtomGetter<Type>): AsyncAtom<Type>
 export function atom<Type>(initial: Type): SyncAtom<Type>
 export function atom<Type>(
-  initial: Type | AsyncAtomGetter<Type>,
+  initial: Type | AsyncAtomGetter<Type> | ComputedAtomGetter<Type>,
   name = 'unknown'
 ): SyncAtom<Type> | AsyncAtom<Type> {
-  if (isAsyncAtomGetter(initial)) {
-    return asyncAtom(initial, name)
+  if (typeof initial === 'function') {
+    if (isAsyncAtomGetter(initial)) {
+      return asyncAtom(initial, name)
+    } else if (isComputedAtomGetter(initial)) {
+      return computedAtom(initial, name)
+    }
+    throw new Error('Invalid atom initial value')
   } else {
     return syncAtom(initial, name)
   }

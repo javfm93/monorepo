@@ -1,18 +1,21 @@
 import { useSyncExternalStore } from 'react'
+import { AsyncAtomGetter } from './asyncAtom'
 import { Subscriber } from './atom'
 import { SyncAtom } from './syncAtom'
 
-type Get = <T>(a: SyncAtom<T>) => T
-export type ComputedAtom<Type> = (get: Get) => Type
+export type AtomGetter = <T>(a: SyncAtom<T>) => T
+export type ComputedAtomGetter<Type> = (get: AtomGetter) => Type
+
+export const isComputedAtomGetter = <Type,>(
+  initial: Type | AsyncAtomGetter<Type> | ComputedAtomGetter<Type>
+): initial is ComputedAtomGetter<Type> => typeof initial === 'function' && initial.length === 1
 
 export const computedAtom = <Type,>(
-  initial: ComputedAtom<Type>,
+  initial: ComputedAtomGetter<Type>,
   name = 'unknown'
 ): SyncAtom<Type> => {
   const subscribeToAtomsDependencies = <T,>(atom: SyncAtom<T>) => {
-    console.log('get called')
     const onSubscribe = () => {
-      console.log('subscribe triggered!')
       onSubscribeComputeAtom()
       subscribers.forEach(callback => callback(value))
     }

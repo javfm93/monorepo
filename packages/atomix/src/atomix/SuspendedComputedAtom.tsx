@@ -3,14 +3,14 @@ import { AsyncAtom, AsyncAtomValue, use } from './asyncAtom'
 import { Subscriber } from './atom'
 import { SyncAtom } from './syncAtom'
 
-type Get = <T, A extends AsyncAtom<T> | SyncAtom<T>>(atom: A) => ReturnType<A['get']>
-export type SuspendedComputedAtom<Type> = (get: Get) => Promise<Type>
+export type SuspendedAtomGetter = <T, A extends AsyncAtom<T> | SyncAtom<T>>(atom: A) => ReturnType<A['get']>
+export type SuspendedComputedAtomGetter<Type> = (get: SuspendedAtomGetter) => Promise<Type>
 
 export const suspendedComputedAtom = <Type,>(
-  initial: SuspendedComputedAtom<Type>,
+  initial: SuspendedComputedAtomGetter<Type>,
   name = 'unknown'
 ): AsyncAtom<Type> => {
-  const subscribeToAtomsDependencies: Get = atom => {
+  const subscribeToAtomsDependencies: SuspendedAtomGetter = atom => {
     const onSubscribe = async () => {
       const newValue = await onSubscribeComputeAtom()
       subscribers.forEach(callback => callback(newValue))
@@ -22,7 +22,7 @@ export const suspendedComputedAtom = <Type,>(
   let value: AsyncAtomValue<Type> | undefined = undefined
   const subscribers = new Set<Subscriber<Type>>()
 
-  const getAtom: Get = atom => {
+  const getAtom: SuspendedAtomGetter = atom => {
     return atom.get() as ReturnType<(typeof atom)['get']>
   }
 
@@ -39,14 +39,12 @@ export const suspendedComputedAtom = <Type,>(
 
   const init = () => {
     if (!value) {
-      console.log('init')
       const result = initial(subscribeToAtomsDependencies)
       result.then(set)
       value = { status: 'pending', result }
       return value
     }
 
-    console.log('returning nice', value.result)
     return value
   }
 
