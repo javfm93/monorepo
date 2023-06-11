@@ -13,10 +13,10 @@ type Rejected = {
 }
 type Pending<T> = {
   status: 'pending'
-  result: Promise<T>
+  result: T
 }
 export type AsyncAtomValue<T> = Fulfilled<T> | Rejected | Pending<T>
-export type AsyncAtomGetter<Type> = () => Promise<Type>
+export type AsyncAtomGetter<Type> = () => Type
 
 export const isAsyncAtomGetter = <Type,>(
   initial: Type | AsyncAtomGetter<Type> | ComputedAtomGetter<Type>
@@ -25,7 +25,7 @@ export const isAsyncAtomGetter = <Type,>(
 export type AsyncAtom<Type> = {
   type: 'async'
   name: string
-  get(): Promise<Type>
+  get(): Type
   init(): AsyncAtomValue<Type>
   set(value: Type): void
   subscribe(callback: Subscriber<Type>): () => void
@@ -45,7 +45,9 @@ export const asyncAtom = <Type,>(
   const init = () => {
     if (!value) {
       const result = initial()
-      result.then(set)
+      if (result instanceof Promise) {
+        result.then(set)
+      }
       value = { status: 'pending', result }
       return value
     }
@@ -58,7 +60,7 @@ export const asyncAtom = <Type,>(
     if (result.status === 'rejected') {
       throw result.result
     }
-    return Promise.resolve(result.result)
+    return result.result
   }
 
   return {
@@ -78,19 +80,22 @@ export const asyncAtom = <Type,>(
 }
 
 export function useAsyncAtom<Type>(atom: AsyncAtom<Type>, suspense = true) {
-  const [value, setValue] = useState<Type>()
+  const [value, setValue] = useState<Awaited<Type>>()
 
   useEffect(() => {
     if (!suspense) {
-      atom.get().then(setValue)
+      const getter = atom.get()
+      if (getter instanceof Promise) {
+        getter.then(setValue)
+      }
     }
-    const unsubscribe = atom.subscribe(newValue => {
-      setValue(newValue)
+    const unsubscribe = atom.subscribe(async newValue => {
+      setValue(await newValue)
     })
     return unsubscribe
   }, [atom])
 
-  return [suspense ? use(atom.init()) : value, atom.set] as const
+  return [suspense ? use(atom.init()) : value, (v: Awaited<Type>) => atom.set(v)] as const
 }
 
 // export function useAsyncAtomValue<Type>(
@@ -104,7 +109,10 @@ export function useAsyncAtomValue<Type>(atom: AsyncAtom<Type>, suspense = true) 
 
   useEffect(() => {
     if (!suspense) {
-      atom.get().then(setValue)
+      const getter = atom.get()
+      if (getter instanceof Promise) {
+        getter.then(setValue)
+      }
     }
     const unsubscribe = atom.subscribe(newValue => {
       setValue(newValue)

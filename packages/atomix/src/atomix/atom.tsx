@@ -24,6 +24,7 @@ export function atom<Type>(
     if (isAsyncAtomGetter(initial)) {
       return asyncAtom(initial, name)
     } else if (isComputedAtomGetter(initial)) {
+      // TODO: asyncComputedAtom
       return computedAtom(initial, name)
     }
     throw new Error('Invalid atom initial value')
@@ -35,8 +36,10 @@ export function atom<Type>(
 export function useAtom<Type>(
   atom: AsyncAtom<Type>,
   suspense: false
-): readonly [Type | undefined, (value: Type) => void]
-export function useAtom<Type>(atom: AsyncAtom<Type>): readonly [Type, (value: Type) => void]
+): readonly [Awaited<Type> | undefined, (value: Awaited<Type>) => void]
+export function useAtom<Type>(
+  atom: AsyncAtom<Type>
+): readonly [Awaited<Type>, (value: Awaited<Type>) => void]
 export function useAtom<Type>(atom: SyncAtom<Type>): readonly [Type, (value: Type) => void]
 export function useAtom<Type>(atom: SyncAtom<Type> | AsyncAtom<Type>, suspense = true) {
   if (atom.type === 'sync') {
@@ -57,6 +60,8 @@ export function useAtomValue<Type>(atom: SyncAtom<Type> | AsyncAtom<Type>, suspe
   }
 }
 
-export const useAtomSetter = <Type,>(atom: SyncAtom<Type> | AsyncAtom<Type>) => {
+export function useAtomSetter<Type>(atom: AsyncAtom<Type>): (value: Awaited<Type>) => void
+export function useAtomSetter<Type>(atom: SyncAtom<Type>): (value: Type) => void
+export function useAtomSetter<Type>(atom: SyncAtom<Type> | AsyncAtom<Type>) {
   return atom.set
 }
