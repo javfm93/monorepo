@@ -1,9 +1,10 @@
 import { useEffect, useRef } from 'react'
 import './App.css'
 
-const stickiesIndex: Path2D[] = []
+let stickiesIndex: Path2D[] = []
 const stickiesMap: Map<Path2D, { size: number; position: { x: number; y: number }; text: string }> =
   new Map()
+let selectedSticky: Path2D | null = null
 
 function handleEnter(input: HTMLInputElement, ctx: CanvasRenderingContext2D, sticky: Path2D) {
   return (e: KeyboardEvent) => {
@@ -65,6 +66,23 @@ const drawSquareIn = (x: number, y: number, canvas: HTMLCanvasElement, size = 10
     ctx.fill(square)
     stickiesIndex.push(square)
     stickiesMap.set(square, { size, position: { x, y }, text: '' })
+    return square
+  }
+  return null
+}
+
+const reDrawSquares = (canvas: HTMLCanvasElement) => {
+  const ctx = canvas.getContext('2d')
+
+  if (ctx) {
+    for (const sticky of stickiesMap) {
+      ctx.fillRect(
+        sticky[1].position.x - sticky[1].size / 2,
+        sticky[1].position.y - sticky[1].size / 2,
+        sticky[1].size,
+        sticky[1].size
+      )
+    }
   }
 }
 
@@ -140,8 +158,41 @@ function App() {
         }
       }
     }
+
     if (canvas.current) {
       canvas.current.addEventListener('dblclick', onCanvasDoubleClick)
+      canvas.current.addEventListener('mousedown', (e: MouseEvent) => {
+        console.log('mouse down')
+        if (canvas.current) {
+          const ctx = canvas.current.getContext('2d')
+          const mouseX = e.offsetX
+          const mouseY = e.offsetY
+          const clickedSticky = stickiesIndex.find(sticky =>
+            ctx?.isPointInPath(sticky, mouseX, mouseY)
+          )
+          if (clickedSticky && ctx) {
+            selectedSticky = clickedSticky
+          }
+        }
+      })
+      canvas.current.addEventListener('mousemove', (e: MouseEvent) => {
+        const ctx = canvas.current?.getContext('2d')
+        if (canvas.current && ctx && selectedSticky) {
+          const mouseX = e.offsetX
+          const mouseY = e.offsetY
+          stickiesIndex = stickiesIndex.filter(sticky => sticky !== selectedSticky)
+          const a = stickiesMap.get(selectedSticky)
+          const deleted = stickiesMap.delete(selectedSticky)
+          console.log('deleted', deleted, a)
+          ctx.clearRect(0, 0, canvas.current.width, canvas.current.height)
+          selectedSticky = drawSquareIn(mouseX, mouseY, canvas.current)
+          reDrawSquares(canvas.current)
+        }
+      })
+
+      canvas.current.addEventListener('mouseup', (e: MouseEvent) => {
+        if (selectedSticky) selectedSticky = null
+      })
 
       const ctx = canvas.current.getContext('2d')
       if (ctx) {
@@ -155,12 +206,6 @@ function App() {
           ],
           ctx
         )
-        const image = new Image()
-        image.src = 'https://picsum.photos/200/300'
-
-        image.onload = () => {
-          drawImage(image, ctx)
-        }
       }
     }
     return () => canvas.current?.removeEventListener('dblclick', onCanvasDoubleClick)
