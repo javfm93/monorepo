@@ -49,8 +49,6 @@ const textOnSticky = (sticky: Path2D, ctx: CanvasRenderingContext2D) => {
     const { x, y } = stickyProps.position
     const { text } = stickyProps
     addInput(x, y, ctx, text, sticky)
-  } else {
-    console.log('sticky not found!')
   }
 }
 
@@ -74,12 +72,13 @@ const reDrawSquares = (canvas: HTMLCanvasElement) => {
 
   if (ctx) {
     for (const sticky of stickiesMap) {
-      ctx.fillRect(
-        sticky[1].position.x - sticky[1].size / 2,
-        sticky[1].position.y - sticky[1].size / 2,
-        sticky[1].size,
-        sticky[1].size
-      )
+      const { position, size } = sticky[1]
+      ctx.fillRect(position.x - size / 2, position.y - size / 2, size, size)
+    }
+    // texts should be on their own map
+    for (const sticky of stickiesMap) {
+      const { position, text } = sticky[1]
+      drawText(position.x, position.y, text, ctx, sticky[0])
     }
   }
 }
@@ -110,12 +109,13 @@ const drawText = (
   sticky: Path2D
 ) => {
   const oldSticky = stickiesMap.get(sticky)
-  if (oldSticky) {
+  if (oldSticky && text) {
     if (oldSticky.text !== '') {
       ctx.fillStyle = 'red'
       ctx.fill(sticky)
     }
     oldSticky.text = text
+    stickiesMap.set(sticky, oldSticky)
     ctx.font = '24px serif'
     ctx.fillStyle = 'white'
     ctx.textAlign = 'center'
@@ -201,10 +201,12 @@ function App() {
           const mouseX = e.offsetX
           const mouseY = e.offsetY
           stickiesIndex = stickiesIndex.filter(sticky => sticky !== selectedSticky)
+          const text = stickiesMap.get(selectedSticky)!.text
           stickiesMap.delete(selectedSticky)
           ctx.clearRect(0, 0, canvas.current.width, canvas.current.height)
           selectedSticky = drawSquareIn(mouseX, mouseY, canvas.current)
           reDrawSquares(canvas.current)
+          drawText(mouseX, mouseY, text, ctx, selectedSticky!)
         }
       })
 
@@ -214,8 +216,6 @@ function App() {
 
       const ctx = canvas.current.getContext('2d')
       if (ctx) {
-        drawSquareIn(100, 100, canvas.current)
-        drawSquareIn(200, 300, canvas.current)
         drawArrow(
           { x: 400, y: 100 },
           [
