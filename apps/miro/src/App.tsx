@@ -34,8 +34,6 @@ function addInput(
   input.style.position = 'fixed'
   input.style.left = x + 'px'
   input.style.top = y + 'px'
-  // todo: store the text in the map once it is saved
-  console.log(text)
   input.value = text
 
   input.onkeydown = handleEnter(input, ctx, sticky)
@@ -52,7 +50,7 @@ const textOnSticky = (sticky: Path2D, ctx: CanvasRenderingContext2D) => {
     const { text } = stickyProps
     addInput(x, y, ctx, text, sticky)
   } else {
-    console.log('sticky not foudn!')
+    console.log('sticky not found!')
   }
 }
 
@@ -150,19 +148,41 @@ function App() {
         )
 
         if (clickedSticky && ctx) {
-          console.log('text on sticky')
           textOnSticky(clickedSticky, ctx)
         } else {
           drawSquareIn(mouseX, mouseY, canvas.current)
-          console.log('squared created')
         }
       }
     }
 
     if (canvas.current) {
       canvas.current.addEventListener('dblclick', onCanvasDoubleClick)
+      canvas.current.addEventListener('click', (e: MouseEvent) => {
+        if (canvas.current) {
+          const ctx = canvas.current.getContext('2d')
+          const mouseX = e.offsetX
+          const mouseY = e.offsetY
+
+          const clickedSticky = stickiesIndex.find(sticky =>
+            ctx?.isPointInPath(sticky, mouseX, mouseY)
+          )
+
+          if (clickedSticky && ctx) {
+            const sticky = stickiesMap.get(clickedSticky)
+            if (sticky) {
+              ctx.strokeStyle = 'black'
+              ctx.lineWidth = 5
+              ctx.strokeRect(
+                sticky.position.x - sticky.size / 2,
+                sticky.position.y - sticky.size / 2,
+                sticky.size,
+                sticky.size
+              )
+            }
+          }
+        }
+      })
       canvas.current.addEventListener('mousedown', (e: MouseEvent) => {
-        console.log('mouse down')
         if (canvas.current) {
           const ctx = canvas.current.getContext('2d')
           const mouseX = e.offsetX
@@ -181,16 +201,14 @@ function App() {
           const mouseX = e.offsetX
           const mouseY = e.offsetY
           stickiesIndex = stickiesIndex.filter(sticky => sticky !== selectedSticky)
-          const a = stickiesMap.get(selectedSticky)
-          const deleted = stickiesMap.delete(selectedSticky)
-          console.log('deleted', deleted, a)
+          stickiesMap.delete(selectedSticky)
           ctx.clearRect(0, 0, canvas.current.width, canvas.current.height)
           selectedSticky = drawSquareIn(mouseX, mouseY, canvas.current)
           reDrawSquares(canvas.current)
         }
       })
 
-      canvas.current.addEventListener('mouseup', (e: MouseEvent) => {
+      canvas.current.addEventListener('mouseup', (_: MouseEvent) => {
         if (selectedSticky) selectedSticky = null
       })
 
