@@ -1,10 +1,51 @@
-import { useEffect, useRef } from 'react'
+import { useEffect, useRef, useState } from 'react'
 import './App.css'
 
-let stickiesIndex: Path2D[] = []
-const stickiesMap: Map<Path2D, { size: number; position: { x: number; y: number }; text: string }> =
-  new Map()
+type StickyProps = { size: number; position: { x: number; y: number }; text: string }
+type ArrowProps = {
+  startingPoint: { x: number; y: number }
+  endingPoints: { x: number; y: number }[]
+}
+const stickiesMap: Map<Path2D, StickyProps> = new Map()
+const arrowsMap: Map<Path2D, ArrowProps> = new Map()
 let selectedSticky: Path2D | null = null
+let arrowInCreation: { x: number; y: number } | null = null
+
+const StickyIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+    role="presentation"
+    focusable="false"
+    data-testid="svg-icon"
+    className="h-8"
+  >
+    <path
+      xmlns="http://www.w3.org/2000/svg"
+      d="M4 4v16h9v-5a2 2 0 0 1 2-2h5V4H4zm0-2h16a2 2 0 0 1 2 2v10.172a2 2 0 0 1-.586 1.414l-5.828 5.828a2 2 0 0 1-1.414.586H4a2 2 0 0 1-2-2V4a2 2 0 0 1 2-2z"
+      fillRule="nonzero"
+      fill="currentColor"
+    ></path>
+  </svg>
+)
+
+const ArrowIcon = () => (
+  <svg
+    viewBox="0 0 24 24"
+    aria-hidden="true"
+    role="presentation"
+    focusable="false"
+    data-testid="svg-icon"
+    className="h-8"
+  >
+    <path
+      xmlns="http://www.w3.org/2000/svg"
+      d="M14.293 8.293l-11 11a1 1 0 0 0 1.414 1.414l11-11L18 12l3-9-9 3 2.293 2.293z"
+      fillRule="nonzero"
+      fill="currentColor"
+    ></path>
+  </svg>
+)
 
 function handleEnter(input: HTMLInputElement, ctx: CanvasRenderingContext2D, sticky: Path2D) {
   return (e: KeyboardEvent) => {
@@ -60,7 +101,6 @@ const drawSquareIn = (x: number, y: number, canvas: HTMLCanvasElement, size = 10
     square.rect(x - size / 2, y - size / 2, size, size)
     ctx.fillStyle = 'red'
     ctx.fill(square)
-    stickiesIndex.push(square)
     stickiesMap.set(square, { size, position: { x, y }, text: '' })
     return square
   }
@@ -83,22 +123,37 @@ const reDrawSquares = (canvas: HTMLCanvasElement) => {
   }
 }
 
-const drawArrow = (
+const reDrawArrows = (canvas: HTMLCanvasElement) => {
+  const ctx = canvas.getContext('2d')
+
+  if (ctx) {
+    for (const arrow of arrowsMap) {
+      const { startingPoint, endingPoints } = arrow[1]
+      const newArrow = createArrow(startingPoint, endingPoints)
+      ctx.stroke(newArrow)
+    }
+  }
+}
+
+const createArrow = (
   startingPoint: { x: number; y: number },
-  endingPoints: { x: number; y: number }[],
-  ctx: CanvasRenderingContext2D
+  endingPoints: { x: number; y: number }[]
 ) => {
-  ctx.beginPath()
-  ctx.strokeStyle = 'blue'
-  ctx.lineWidth = 5
-  ctx.moveTo(startingPoint.x, startingPoint.y)
-  endingPoints.forEach(endingPoint => ctx.lineTo(endingPoint.x, endingPoint.y))
+  const arrow = new Path2D()
+  arrow.moveTo(startingPoint.x, startingPoint.y)
+  endingPoints.forEach(endingPoint => arrow.lineTo(endingPoint.x, endingPoint.y))
 
-  ctx.lineTo(endingPoints[1].x - 20, endingPoints[1].y - 20)
-  ctx.moveTo(endingPoints[1].x, endingPoints[1].y)
-  ctx.lineTo(endingPoints[1].x - 20, endingPoints[1].y + 20)
+  arrow.lineTo(
+    endingPoints[endingPoints.length - 1].x - 20,
+    endingPoints[endingPoints.length - 1].y - 20
+  )
+  arrow.moveTo(endingPoints[endingPoints.length - 1].x, endingPoints[endingPoints.length - 1].y)
+  arrow.lineTo(
+    endingPoints[endingPoints.length - 1].x - 20,
+    endingPoints[endingPoints.length - 1].y + 20
+  )
 
-  ctx.stroke()
+  return arrow
 }
 
 const drawText = (
@@ -133,24 +188,41 @@ const downloadCanvas = (canvas: HTMLCanvasElement) => {
   link.href = canvas.toDataURL()
   link.click()
 }
+
+const findStickyByPosition = (
+  stickiesMap: Map<Path2D, StickyProps>,
+  ctx: CanvasRenderingContext2D,
+  x: number,
+  y: number
+) => Array.from(stickiesMap.keys()).find(sticky => ctx.isPointInPath(sticky, x, y))
+
 function App() {
   const canvas = useRef<HTMLCanvasElement>(null)
+  const [selectedShape, setSelectedShape] = useState<'sticky' | 'arrow'>('sticky')
 
   useEffect(() => {
     const onCanvasDoubleClick = (e: MouseEvent) => {
-      if (canvas.current) {
-        const ctx = canvas.current.getContext('2d')
+      const ctx = canvas.current?.getContext('2d')
+      if (canvas.current && ctx) {
         const mouseX = e.offsetX
         const mouseY = e.offsetY
 
-        const clickedSticky = stickiesIndex.find(sticky =>
-          ctx?.isPointInPath(sticky, mouseX, mouseY)
-        )
+        if (selectedShape === 'sticky') {
+          const clickedSticky = findStickyByPosition(stickiesMap, ctx, mouseX, mouseY)
 
-        if (clickedSticky && ctx) {
-          textOnSticky(clickedSticky, ctx)
-        } else {
-          drawSquareIn(mouseX, mouseY, canvas.current)
+          if (clickedSticky && ctx) {
+            textOnSticky(clickedSticky, ctx)
+          } else {
+            drawSquareIn(mouseX, mouseY, canvas.current)
+          }
+        }
+
+        if (selectedShape === 'arrow' && ctx) {
+          const newArrow = createArrow({ x: mouseX, y: mouseY }, [
+            { x: mouseX + 10, y: mouseY + 10 }
+          ])
+          ctx.stroke(newArrow)
+          arrowInCreation = { x: mouseX, y: mouseY }
         }
       }
     }
@@ -158,38 +230,49 @@ function App() {
     if (canvas.current) {
       canvas.current.addEventListener('dblclick', onCanvasDoubleClick)
       canvas.current.addEventListener('click', (e: MouseEvent) => {
-        if (canvas.current) {
-          const ctx = canvas.current.getContext('2d')
+        const ctx = canvas.current?.getContext('2d')
+        if (canvas.current && ctx) {
+          ctx.lineWidth = 5
+
           const mouseX = e.offsetX
           const mouseY = e.offsetY
 
-          const clickedSticky = stickiesIndex.find(sticky =>
-            ctx?.isPointInPath(sticky, mouseX, mouseY)
-          )
+          if (arrowInCreation) {
+            ctx.clearRect(0, 0, canvas.current.width, canvas.current.height)
+            const newArrow = createArrow(arrowInCreation, [{ x: mouseX, y: mouseY }])
+            arrowsMap.set(newArrow, {
+              startingPoint: arrowInCreation,
+              endingPoints: [{ x: mouseX, y: mouseY }]
+            })
+            reDrawSquares(canvas.current)
+            reDrawArrows(canvas.current)
+            arrowInCreation = { x: mouseX, y: mouseY }
+            arrowInCreation = null
+          } else {
+            const clickedSticky = findStickyByPosition(stickiesMap, ctx, mouseX, mouseY)
 
-          if (clickedSticky && ctx) {
-            const sticky = stickiesMap.get(clickedSticky)
-            if (sticky) {
-              ctx.strokeStyle = 'black'
-              ctx.lineWidth = 5
-              ctx.strokeRect(
-                sticky.position.x - sticky.size / 2,
-                sticky.position.y - sticky.size / 2,
-                sticky.size,
-                sticky.size
-              )
+            if (clickedSticky && ctx) {
+              const sticky = stickiesMap.get(clickedSticky)
+              if (sticky) {
+                ctx.strokeStyle = 'black'
+                ctx.lineWidth = 5
+                ctx.strokeRect(
+                  sticky.position.x - sticky.size / 2,
+                  sticky.position.y - sticky.size / 2,
+                  sticky.size,
+                  sticky.size
+                )
+              }
             }
           }
         }
       })
       canvas.current.addEventListener('mousedown', (e: MouseEvent) => {
-        if (canvas.current) {
-          const ctx = canvas.current.getContext('2d')
+        const ctx = canvas.current?.getContext('2d')
+        if (canvas.current && ctx) {
           const mouseX = e.offsetX
           const mouseY = e.offsetY
-          const clickedSticky = stickiesIndex.find(sticky =>
-            ctx?.isPointInPath(sticky, mouseX, mouseY)
-          )
+          const clickedSticky = findStickyByPosition(stickiesMap, ctx, mouseX, mouseY)
           if (clickedSticky && ctx) {
             selectedSticky = clickedSticky
           }
@@ -197,40 +280,64 @@ function App() {
       })
       canvas.current.addEventListener('mousemove', (e: MouseEvent) => {
         const ctx = canvas.current?.getContext('2d')
-        if (canvas.current && ctx && selectedSticky) {
-          const mouseX = e.offsetX
-          const mouseY = e.offsetY
-          stickiesIndex = stickiesIndex.filter(sticky => sticky !== selectedSticky)
-          const text = stickiesMap.get(selectedSticky)!.text
-          stickiesMap.delete(selectedSticky)
-          ctx.clearRect(0, 0, canvas.current.width, canvas.current.height)
-          selectedSticky = drawSquareIn(mouseX, mouseY, canvas.current)
-          reDrawSquares(canvas.current)
-          drawText(mouseX, mouseY, text, ctx, selectedSticky!)
+        if (canvas.current && ctx) {
+          if (selectedSticky) {
+            const mouseX = e.offsetX
+            const mouseY = e.offsetY
+            const text = stickiesMap.get(selectedSticky)!.text
+            stickiesMap.delete(selectedSticky)
+            ctx.clearRect(0, 0, canvas.current.width, canvas.current.height)
+            selectedSticky = drawSquareIn(mouseX, mouseY, canvas.current)
+            reDrawSquares(canvas.current)
+            reDrawArrows(canvas.current)
+            drawText(mouseX, mouseY, text, ctx, selectedSticky!)
+          }
+
+          if (arrowInCreation) {
+            const mouseX = e.offsetX
+            const mouseY = e.offsetY
+            ctx.clearRect(0, 0, canvas.current.width, canvas.current.height)
+            const newArrow = createArrow(arrowInCreation, [{ x: mouseX, y: mouseY }])
+            ctx.stroke(newArrow)
+            reDrawSquares(canvas.current)
+            reDrawArrows(canvas.current)
+          }
         }
       })
 
       canvas.current.addEventListener('mouseup', (_: MouseEvent) => {
         if (selectedSticky) selectedSticky = null
       })
-
-      const ctx = canvas.current.getContext('2d')
-      if (ctx) {
-        drawArrow(
-          { x: 400, y: 100 },
-          [
-            { x: 400, y: 300 },
-            { x: 500, y: 300 }
-          ],
-          ctx
-        )
-      }
     }
     return () => canvas.current?.removeEventListener('dblclick', onCanvasDoubleClick)
-  }, [canvas])
+  }, [canvas, selectedShape])
 
   return (
     <>
+      <aside className="w-fit m-3 p-1 sticky top-1/3 shadow bg-white">
+        <ul className="flex flex-col gap-1">
+          <li>
+            <button
+              className={`hover:bg-blue-50 hover:text-blue-600 rounded p-1 ${
+                selectedShape === 'sticky' && 'bg-blue-50 text-blue-600'
+              }`}
+              onClick={() => setSelectedShape('sticky')}
+            >
+              <StickyIcon />
+            </button>
+          </li>
+          <li>
+            <button
+              className={`hover:bg-blue-50 hover:text-blue-600 rounded p-1 ${
+                selectedShape === 'arrow' && 'bg-blue-50 text-blue-600'
+              }`}
+              onClick={() => setSelectedShape('arrow')}
+            >
+              <ArrowIcon />
+            </button>
+          </li>
+        </ul>
+      </aside>
       <canvas ref={canvas} className="m-8 border-2" id="canvas" width="1400" height="600">
         Your browser does not support HTML5 canvas.
       </canvas>
