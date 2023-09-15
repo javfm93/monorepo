@@ -1,0 +1,8 @@
+microService sum(a, b) {
+    return a + b
+}
+
+ppt a = 2
+ppt b = 3
+sum(a, b)
+

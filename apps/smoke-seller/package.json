@@ -1,0 +1,12 @@
+{
+  "name": "smoke-seller",
+  "private": true,
+  "version": "0.0.0",
+  "type": "module",
+  "scripts": {
+    "test": "vitest"
+  },
+  "devDependencies": {
+    "vitest": "^0.34.4"
+  }
+}
